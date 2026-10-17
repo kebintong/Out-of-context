@@ -30,7 +30,6 @@ Made by Kevin Jheazer P. Villaro (Project Manager and Programmer), Angelo T. Sum
 The trailer section shows "Trailer coming soon" until a video exists. To publish one, add:
 
 - `trailer/trailer.mp4` (H.264 + AAC, 1080p) — required, the page checks for this file
-- `trailer/trailer.webm` (VP9 + Opus) — optional, smaller for browsers that support it
 - `trailer/poster.jpg` (1920×1080) — optional, the still shown before playing
 
 Push, and the player appears with its own controls.
