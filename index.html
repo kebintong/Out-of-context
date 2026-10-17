@@ -325,6 +325,165 @@
   footer { color: #bfb2e0; font-size: 14px; padding: 30px 0 50px; }
   footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
 
+
+  [hidden] { display: none !important; }
+
+  /* ------------------------------------------------------------------ 3D stage + micro-animations */
+  .scene { perspective: 1100px; perspective-origin: 50% 40%; }
+  .stage3d {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    will-change: transform;
+  }
+  .platform { translate: 0 0 0; }
+  .robot { translate: 0 0 60px; }
+  .mod { translate: 0 0 120px; }
+  .bubble { translate: 0 0 150px; transform-origin: 85% 100%; }
+  .bubble.pop { animation: pop .35s cubic-bezier(.3, 1.8, .5, 1); }
+  @keyframes pop { from { transform: scale(.8); } to { transform: scale(1); } }
+
+  .robot-svg { display: block; width: 100%; height: auto; overflow: visible; transform-origin: 50% 100%; }
+  .robot-svg .r-all { animation: breathe 2.8s ease-in-out infinite; transform-origin: 100px 215px; }
+  .robot-svg .r-head { animation: tilt 6s ease-in-out infinite; transform-origin: 100px 150px; }
+  .robot-svg .r-finL { animation: finL 1.7s ease-in-out infinite; transform-origin: 48px 90px; }
+  .robot-svg .r-finR { animation: finR 1.7s ease-in-out infinite; transform-origin: 152px 90px; }
+  .robot-svg .r-armL { animation: armL 2.8s ease-in-out infinite; transform-origin: 62px 142px; }
+  .robot-svg .r-armR { animation: armR 2.8s ease-in-out infinite; transform-origin: 138px 142px; }
+  .robot-svg .r-blink, .robot-svg .r-love { opacity: 0; }
+  .robot.blink .r-eyes { opacity: 0; }
+  .robot.blink .r-blink { opacity: 1; }
+  .robot.love .r-eyes, .robot.love .r-blink { opacity: 0; }
+  .robot.love .r-love { opacity: 1; }
+  .robot.hop .robot-svg { animation: hop .6s cubic-bezier(.3, .7, .4, 1); }
+  @keyframes breathe { 50% { transform: translateY(3px) scale(1.012, .985); } }
+  @keyframes tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-3deg); } 65% { transform: rotate(2.5deg); } }
+  @keyframes finL { 50% { transform: rotate(-9deg); } }
+  @keyframes finR { 50% { transform: rotate(9deg); } }
+  @keyframes armL { 50% { transform: rotate(7deg); } }
+  @keyframes armR { 50% { transform: rotate(-7deg); } }
+  @keyframes hop {
+    0% { transform: scale(1, 1); }
+    18% { transform: scale(1.12, .82); }
+    45% { transform: translateY(-46px) scale(.92, 1.1) rotate(-4deg); }
+    75% { transform: translateY(0) scale(1.1, .88); }
+    100% { transform: scale(1, 1); }
+  }
+  .mod-svg { transform-origin: 50% 55%; }
+  .mod-svg.roll { animation: roll .7s cubic-bezier(.4, .1, .3, 1); }
+  @keyframes roll { to { transform: rotate(360deg); } }
+  .platform .top { animation: turntable 30s linear infinite; }
+  @keyframes turntable { to { background-position: 460px 0; } }
+
+  .title .l.landed { animation: none; opacity: 1; transform: rotate(var(--rr)); }
+  .title .l.jump { animation: jump .5s cubic-bezier(.3, .7, .4, 1); }
+  @keyframes jump {
+    0% { transform: rotate(var(--rr)); }
+    25% { transform: translateY(4px) scale(1.12, .86) rotate(var(--rr)); }
+    55% { transform: translateY(-22px) scale(.92, 1.1) rotate(calc(var(--rr) * -2)); }
+    100% { transform: rotate(var(--rr)); }
+  }
+  .title .l { cursor: default; }
+
+  .btn { position: relative; overflow: hidden; }
+  .btn::after {
+    content: ""; position: absolute; top: -20%; bottom: -20%; width: 40px; left: -60px;
+    background: rgba(255, 255, 255, .55); transform: skewX(-20deg); pointer-events: none;
+  }
+  .btn:hover::after { animation: shine .7s ease-out; }
+  @keyframes shine { to { left: calc(100% + 30px); } }
+
+  .copy.done, .btn-ghost.done { background: var(--lime); color: #193300; animation: pop .3s cubic-bezier(.3, 1.8, .5, 1); }
+  .verdict.ok { animation: pop .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .match input.shake { animation: shake .4s; border-color: var(--pink); }
+  @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+  .confetti { position: fixed; width: 9px; height: 13px; border-radius: 2px; pointer-events: none; z-index: 50; }
+
+  .tile { transform: perspective(600px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)) translateY(var(--lift, 0)); transition: transform .18s ease, box-shadow .18s ease; position: relative; }
+  .tile:hover { --lift: -4px; box-shadow: 0 10px 0 rgba(43, 27, 74, .12); }
+  .board { position: relative; }
+  .fake-label {
+    position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; margin: 0;
+    border: 2px dashed rgba(255, 61, 143, .45); border-radius: 14px;
+    font-family: var(--display); font-size: 20px; color: var(--pink);
+    opacity: 0; pointer-events: none;
+  }
+  .tile.fake { animation: fakefall 1.5s ease-in-out; }
+  .fake-label.show { animation: fakelabel 1.5s ease-in-out; }
+  @keyframes fakefall {
+    0% { transform: none; }
+    12% { transform: translateY(-3px) rotate(-2deg); }
+    40% { transform: translateY(60px) rotate(9deg); opacity: 0; }
+    70% { transform: translateY(-14px); opacity: 0; }
+    100% { transform: none; opacity: 1; }
+  }
+  @keyframes fakelabel { 0%, 15% { opacity: 0; } 25%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ------------------------------------------------------------------ trailer (a game-show TV) */
+  .trailer { padding: 10px 0 34px; }
+  .trailer h2 { color: var(--paper); margin-bottom: 18px; }
+  .tv {
+    position: relative;
+    padding: 18px;
+    border-radius: 34px;
+    background:
+      radial-gradient(circle, #FFD23F 0 4px, rgba(255, 210, 63, .25) 5px, transparent 7px) 0 0 / 26px 26px,
+      linear-gradient(#ff3d8f, #c21f6a);
+    box-shadow: 0 10px 0 #7d0f42, 0 30px 60px rgba(0, 0, 0, .35);
+    animation: bulbs 1.6s steps(2) infinite;
+  }
+  .tv.playing { animation-duration: .5s; }
+  @keyframes bulbs { to { background-position: 13px 0, 0 0; } }
+  .screen {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 20px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #3b1d6e, #160a2e 70%);
+    box-shadow: inset 0 0 0 4px #160a2e;
+  }
+  .screen video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
+  .soon {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 6px;
+    color: #d9cdf5; padding: 24px;
+  }
+  .soon p { margin: 0 auto; max-width: 30em; }
+  .soon .soon-big { font-family: var(--display); font-size: clamp(28px, 4.5vw, 54px); color: var(--paper); line-height: 1.1; }
+  .soon .soon-big { animation: flicker 4s steps(1) infinite; }
+  @keyframes flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .55; } 95% { opacity: 1; } 96% { opacity: .7; } }
+  .tv-play {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    width: 110px; height: 110px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--lime); color: #193300; box-shadow: 0 7px 0 var(--lime-dark);
+    display: grid; place-items: center;
+    transition: transform .12s ease;
+  }
+  .tv-play svg { width: 50px; height: 50px; margin-left: 6px; }
+  .tv-play:hover { transform: scale(1.07); }
+  .tv-play:active { transform: scale(.95); }
+  .tv-bar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 14px;
+    background: rgba(22, 10, 46, .78); color: #fff;
+    transition: opacity .25s ease;
+  }
+  .tv-bar.idle { opacity: 0; }
+  .tv-bar button { border: 0; background: none; color: inherit; cursor: pointer; width: 34px; height: 34px; padding: 5px; border-radius: 8px; flex: none; }
+  .tv-bar button:hover { background: rgba(255, 255, 255, .12); }
+  .tv-bar svg { width: 100%; height: 100%; display: block; }
+  .tv-bar input[type=range] { flex: 1; min-width: 60px; accent-color: var(--yellow); }
+  .tv-time { font-size: 13px; font-variant-numeric: tabular-nums; min-width: 82px; text-align: right; }
+  .onair {
+    position: absolute; top: -14px; right: 34px;
+    padding: 4px 14px 5px; border-radius: 999px;
+    background: #5b1532; color: #ffb3cd;
+    font-family: var(--display); font-size: 16px;
+    box-shadow: 0 4px 0 #3a0c20;
+  }
+  .tv.playing .onair { background: #ff2f4f; color: #fff; animation: onair 1.2s ease-in-out infinite; }
+  @keyframes onair { 50% { box-shadow: 0 4px 0 #3a0c20, 0 0 22px #ff2f4f; } }
+
   /* ------------------------------------------------------------------ responsive */
   @media (max-width: 900px) {
     .hero-grid, .show, .verify, .two { grid-template-columns: 1fr; }
@@ -345,8 +504,16 @@
     .title .l { -webkit-text-stroke-width: 2px; text-shadow: 0 4px 0 #170a30; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .title .l, .mod, .mod .rotor { animation: none; }
+    .title .l, .mod, .mod .rotor, .robot-svg *, .robot.hop .robot-svg, .platform .top, .tv, .soon .soon-big, .tv.playing .onair,
+    .title .l.jump, .tile.fake, .bubble.pop, .mod-svg.roll { animation: none !important; }
+    .stage3d { transform: none !important; }
     html { scroll-behavior: auto; }
+  }
+  @media (max-width: 560px) {
+    .tv { padding: 10px; border-radius: 22px; }
+    .tv-play { width: 80px; height: 80px; }
+    .tv-play svg { width: 36px; height: 36px; }
+    .tv-time { display: none; }
   }
 </style>
 </head>
@@ -360,6 +527,7 @@
         Out of Context
       </a>
       <nav aria-label="Sections">
+        <a href="#trailer">Trailer</a>
         <a href="#show">The show</a>
         <a href="#verify">Check your download</a>
         <a href="#controls">Controls</a>
@@ -396,10 +564,11 @@
         </div>
       </div>
 
-      <div class="scene">
+      <div class="scene" id="scene">
+       <div class="stage3d" id="stage3d">
         <div class="bubble" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
         <button class="mod" id="mod" type="button" aria-label="Poke the Moderator">
-          <svg viewBox="0 0 160 150" aria-hidden="true">
+          <svg class="mod-svg" id="mod-svg" viewBox="0 0 160 150" aria-hidden="true">
             <rect x="77" y="22" width="6" height="18" rx="2" fill="#15161C"/>
             <g class="rotor"><rect x="20" y="16" width="120" height="7" rx="3.5" fill="#FFD23F"/><ellipse cx="80" cy="19" rx="10" ry="5" fill="#F2F4F8"/></g>
             <ellipse cx="27" cy="84" rx="9" ry="22" fill="#F2F4F8"/>
@@ -415,30 +584,39 @@
             <ellipse cx="140" cy="132" rx="13" ry="11" fill="#F2F4F8"/>
           </svg>
         </button>
-        <svg class="robot" viewBox="0 0 200 240" role="img" aria-label="The player, a little white robot with a big helmet and a blue belly panel">
+        <div class="robot" id="robot">
+        <svg class="robot-svg" viewBox="0 0 200 240" role="img" aria-label="The player, a little white robot with a big helmet and a blue belly panel">
           <defs>
             <radialGradient id="shine" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#eef1f7"/><stop offset="1" stop-color="#cfd6e6"/></radialGradient>
           </defs>
           <ellipse cx="82" cy="226" rx="13" ry="8" fill="url(#shine)"/>
           <ellipse cx="118" cy="226" rx="13" ry="8" fill="url(#shine)"/>
-          <ellipse cx="50" cy="160" rx="15" ry="26" transform="rotate(24 50 160)" fill="url(#shine)"/>
-          <ellipse cx="150" cy="160" rx="15" ry="26" transform="rotate(-24 150 160)" fill="url(#shine)"/>
-          <ellipse cx="100" cy="168" rx="43" ry="47" fill="url(#shine)"/>
-          <path d="M58 163h84" stroke="#15161C" stroke-width="2.4" opacity=".75"/>
-          <path d="M79 170h42q0 24-21 24t-21-24z" fill="#5CC3F0" stroke="#15161C" stroke-width="2.2"/>
-          <ellipse cx="42" cy="70" rx="8" ry="23" transform="rotate(-14 42 70)" fill="url(#shine)"/>
-          <ellipse cx="158" cy="70" rx="8" ry="23" transform="rotate(14 158 70)" fill="url(#shine)"/>
-          <ellipse cx="37" cy="106" rx="9" ry="24" fill="url(#shine)"/>
-          <ellipse cx="163" cy="106" rx="9" ry="24" fill="url(#shine)"/>
-          <rect x="81" y="44" width="38" height="15" rx="7" fill="url(#shine)"/>
-          <ellipse cx="100" cy="104" rx="64" ry="53" fill="url(#shine)"/>
-          <ellipse cx="100" cy="110" rx="51" ry="34" fill="#15161C"/>
-          <ellipse cx="100" cy="110" rx="47" ry="30" fill="#172640"/>
-          <ellipse cx="82" cy="96" rx="20" ry="6" fill="#ffffff" opacity=".08"/>
-          <path d="M70 110q10-12 20 0M110 110q10-12 20 0" stroke="#7FD3FF" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-          <path d="M93 124q7 6 14 0" stroke="#7FD3FF" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          <g class="r-all">
+            <g class="r-armL"><ellipse cx="50" cy="160" rx="15" ry="26" transform="rotate(24 50 160)" fill="url(#shine)"/></g>
+            <g class="r-armR"><ellipse cx="150" cy="160" rx="15" ry="26" transform="rotate(-24 150 160)" fill="url(#shine)"/></g>
+            <ellipse cx="100" cy="168" rx="43" ry="47" fill="url(#shine)"/>
+            <path d="M58 163h84" stroke="#15161C" stroke-width="2.4" opacity=".75"/>
+            <path d="M79 170h42q0 24-21 24t-21-24z" fill="#5CC3F0" stroke="#15161C" stroke-width="2.2"/>
+            <g class="r-head">
+              <g class="r-finL"><ellipse cx="42" cy="70" rx="8" ry="23" transform="rotate(-14 42 70)" fill="url(#shine)"/></g>
+              <g class="r-finR"><ellipse cx="158" cy="70" rx="8" ry="23" transform="rotate(14 158 70)" fill="url(#shine)"/></g>
+              <ellipse cx="37" cy="106" rx="9" ry="24" fill="url(#shine)"/>
+              <ellipse cx="163" cy="106" rx="9" ry="24" fill="url(#shine)"/>
+              <rect x="81" y="44" width="38" height="15" rx="7" fill="url(#shine)"/>
+              <ellipse cx="100" cy="104" rx="64" ry="53" fill="url(#shine)"/>
+              <ellipse cx="100" cy="110" rx="51" ry="34" fill="#15161C"/>
+              <ellipse cx="100" cy="110" rx="47" ry="30" fill="#172640"/>
+              <ellipse cx="82" cy="96" rx="20" ry="6" fill="#ffffff" opacity=".08"/>
+              <g class="r-eyes"><path d="M70 110q10-12 20 0M110 110q10-12 20 0" stroke="#7FD3FF" stroke-width="5.5" fill="none" stroke-linecap="round"/></g>
+              <g class="r-blink"><path d="M71 108h18M111 108h18" stroke="#7FD3FF" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+              <g class="r-love"><path d="M80 116c-9-6-12-10-9-14 2-3 7-2 9 1 2-3 7-4 9-1 3 4 0 8-9 14zM120 116c-9-6-12-10-9-14 2-3 7-2 9 1 2-3 7-4 9-1 3 4 0 8-9 14z" fill="#FF7EB6"/></g>
+              <path d="M93 124q7 6 14 0" stroke="#7FD3FF" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
         </svg>
+        </div>
         <div class="platform" aria-hidden="true"><div class="side"></div><div class="top"></div></div>
+       </div>
       </div>
     </div>
   </div>
@@ -446,6 +624,33 @@
 
 <main>
   <div class="wrap">
+
+    <section class="trailer" id="trailer" aria-labelledby="trailer-h">
+      <h2 id="trailer-h">Watch the trailer</h2>
+      <div class="tv" id="tv">
+        <div class="screen">
+          <video id="tv-video" playsinline preload="none" hidden>
+            <source src="trailer/trailer.webm" type="video/webm">
+            <source src="trailer/trailer.mp4" type="video/mp4">
+          </video>
+          <div class="soon" id="tv-soon">
+            <p class="soon-big">Trailer coming soon</p>
+            <p>The Moderator is still in the editing room. He wants more close-ups of himself.</p>
+          </div>
+          <button class="tv-play" id="tv-play" type="button" hidden aria-label="Play the trailer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+          </button>
+          <div class="tv-bar" id="tv-bar" hidden>
+            <button type="button" id="tv-toggle" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="tv-toggle-icon" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+            <input type="range" id="tv-seek" min="0" max="1000" value="0" step="1" aria-label="Seek">
+            <span class="tv-time" id="tv-time">0:00</span>
+            <button type="button" id="tv-mute" aria-label="Mute"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="tv-mute-icon" d="M4 9h4l5-4v14l-5-4H4zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" id="tv-full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <span class="onair" id="onair" aria-hidden="true">On air</span>
+      </div>
+    </section>
 
     <section class="sheet" id="show" aria-labelledby="show-h">
       <h2 id="show-h">Twelve stages. Two bosses. One host who won't stop talking.</h2>
@@ -558,6 +763,26 @@
 
 <script>
 (function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var modSvg = document.getElementById('mod-svg');
+  function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function shake(el) { if (reduced) return; restart(el, 'shake'); setTimeout(function () { el.classList.remove('shake'); }, 450); }
+  function confetti(from) {
+    if (reduced || !from.animate) return;
+    var r = from.getBoundingClientRect(), c = ['#FF7EB6', '#FFD23F', '#3DDCFF', '#9BE564', '#FF8C42', '#9B5DE5'];
+    for (var n = 0; n < 46; n++) {
+      var p = document.createElement('span'); p.className = 'confetti';
+      p.style.background = c[n % c.length];
+      p.style.left = (r.left + r.width * Math.random()) + 'px'; p.style.top = (r.top + r.height / 2) + 'px';
+      document.body.appendChild(p);
+      var dx = (Math.random() - .5) * 360, up = 120 + Math.random() * 160, spin = (Math.random() - .5) * 1080;
+      p.animate([
+        { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+        { transform: 'translate(' + dx * .6 + 'px,' + -up + 'px) rotate(' + spin / 2 + 'deg)', opacity: 1, offset: .35 },
+        { transform: 'translate(' + dx + 'px,' + (up * .8) + 'px) rotate(' + spin + 'deg)', opacity: 0 }
+      ], { duration: 1300 + Math.random() * 600, easing: 'cubic-bezier(.2,.6,.4,1)' }).onfinish = (function (el) { return function () { el.remove(); }; })(p);
+    }
+  }
   // ---------- release info (filled in by update_release.py)
   var rel = {};
   try { rel = JSON.parse(document.getElementById('release-data').textContent); } catch (e) {}
@@ -585,7 +810,7 @@
     b.addEventListener('click', function () {
       var text = values[b.getAttribute('data-copy')];
       var label = b.textContent;
-      function done() { b.textContent = 'Copied'; setTimeout(function () { b.textContent = label; }, 1600); }
+      function done() { b.textContent = 'Copied'; b.classList.add('done'); setTimeout(function () { b.textContent = label; b.classList.remove('done'); }, 1600); }
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
       else {
         var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
@@ -601,8 +826,14 @@
     if (!paste.value.trim()) { verdict.textContent = ''; verdict.className = 'verdict'; return; }
     if (!m) { verdict.textContent = 'That doesn\'t look like a SHA-256 checksum yet (64 letters and numbers).'; verdict.className = 'verdict bad'; return; }
     if (!ready) { verdict.textContent = 'There is no published checksum to compare with yet.'; verdict.className = 'verdict bad'; return; }
-    if (m[0] === rel.sha256.toUpperCase()) { verdict.textContent = 'It matches. Safe to play.'; verdict.className = 'verdict ok'; }
-    else { verdict.textContent = 'It does not match. Delete that file and download it again from this page.'; verdict.className = 'verdict bad'; }
+    if (m[0] === rel.sha256.toUpperCase()) {
+      var was = verdict.classList.contains('ok');
+      verdict.textContent = 'It matches. Safe to play.'; verdict.className = 'verdict ok';
+      if (!was) confetti(paste);
+    } else {
+      verdict.textContent = 'It does not match. Delete that file and download it again from this page.'; verdict.className = 'verdict bad';
+      shake(paste);
+    }
   });
 
   // ---------- title letters (the game's main menu colours)
@@ -622,6 +853,16 @@
   }
   letters(document.getElementById('t1'), 'OUT OF');
   letters(document.getElementById('t2'), 'CONTEXT');
+  document.querySelectorAll('.title .l').forEach(function (l) {
+    l.addEventListener('animationend', function (e) {
+      if (e.animationName === 'drop') l.classList.add('landed');
+      if (e.animationName === 'jump') l.classList.remove('jump');
+    });
+    l.addEventListener('pointerenter', function () {
+      if (!l.classList.contains('landed') || l.classList.contains('jump')) return;
+      l.classList.add('jump');
+    });
+  });
 
   // ---------- stage board
   var stages = ['Warm-Up', 'Slime Jumps', 'Checkerboard of Lies', 'Choose a Door', 'Disappearing Stairs', 'Rush Hour',
@@ -634,6 +875,25 @@
     t.style.setProperty('--c', stageCols[i]);
     t.innerHTML = '<span class="n">' + (i < 9 ? '0' : '') + (i + 1) + '</span><span class="name"></span>';
     t.querySelector('.name').textContent = name;
+    if (i === 2) {
+      t.addEventListener('pointerenter', function () {
+        if (reduced || t.classList.contains('fake')) return;
+        t.classList.add('fake');
+        var f = document.createElement('span'); f.className = 'fake-label show'; f.textContent = 'Fake!';
+        f.style.left = t.offsetLeft + 'px'; f.style.top = t.offsetTop + 'px';
+        f.style.width = t.offsetWidth + 'px'; f.style.height = t.offsetHeight + 'px';
+        board.appendChild(f);
+        f.addEventListener('animationend', function () { f.remove(); });
+      });
+      t.addEventListener('animationend', function (e) { if (e.animationName === 'fakefall') t.classList.remove('fake'); });
+    } else if (!reduced) {
+      t.addEventListener('pointermove', function (e) {
+        var r = t.getBoundingClientRect();
+        t.style.setProperty('--ty', ((e.clientX - r.left) / r.width - .5) * 16 + 'deg');
+        t.style.setProperty('--tx', -((e.clientY - r.top) / r.height - .5) * 16 + 'deg');
+      });
+      t.addEventListener('pointerleave', function () { t.style.removeProperty('--tx'); t.style.removeProperty('--ty'); });
+    }
     board.appendChild(t);
   });
 
@@ -651,7 +911,107 @@
     bubble.innerHTML = '';
     bubble.appendChild(document.createTextNode(line));
     var s = document.createElement('small'); s.textContent = 'Pokes: ' + pokes; bubble.appendChild(s);
+    restart(bubble, 'pop');
+    if (pokes % 3 === 0) restart(modSvg, 'roll');
   });
+  modSvg.addEventListener('animationend', function (e) { if (e.animationName === 'roll') modSvg.classList.remove('roll'); });
+
+  // ---------- the robot: blinks, hops when you reach for the download
+  var robot = document.getElementById('robot');
+  (function blink() {
+    setTimeout(function () {
+      robot.classList.add('blink');
+      setTimeout(function () { robot.classList.remove('blink'); blink(); }, 140);
+    }, 2200 + Math.random() * 3200);
+  })();
+  function hop() {
+    if (reduced || robot.classList.contains('hop')) return;
+    robot.classList.add('hop', 'love');
+  }
+  robot.addEventListener('animationend', function (e) {
+    if (e.animationName === 'hop') { robot.classList.remove('hop'); setTimeout(function () { robot.classList.remove('love'); }, 500); }
+  });
+  dl.addEventListener('pointerenter', hop);
+  dl.addEventListener('focus', hop);
+
+  // ---------- 3D tilt of the hero stage, following the pointer
+  var scene = document.getElementById('scene'), stage = document.getElementById('stage3d');
+  var tx = 0, ty = 0, cx = 0, cy = 0, running = false;
+  function tick() {
+    cx += (tx - cx) * .08; cy += (ty - cy) * .08;
+    stage.style.setProperty('--ry', (cx * 14).toFixed(2) + 'deg');
+    stage.style.setProperty('--rx', (-cy * 9).toFixed(2) + 'deg');
+    if (Math.abs(tx - cx) > .001 || Math.abs(ty - cy) > .001) requestAnimationFrame(tick); else running = false;
+  }
+  function aim(x, y) { tx = x; ty = y; if (!running) { running = true; requestAnimationFrame(tick); } }
+  if (!reduced && window.matchMedia('(hover: hover)').matches) {
+    window.addEventListener('pointermove', function (e) {
+      var r = scene.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
+      aim(Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (innerWidth / 2))),
+          Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (innerHeight / 2))));
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', function () { aim(0, 0); });
+  } else if (!reduced) {
+    // touch screens: a gentle sway as you scroll past
+    window.addEventListener('scroll', function () {
+      var r = scene.getBoundingClientRect();
+      aim(0, Math.max(-1, Math.min(1, (r.top + r.height / 2 - innerHeight / 2) / innerHeight)));
+    }, { passive: true });
+  }
+
+  // ---------- trailer player
+  var tv = document.getElementById('tv'), video = document.getElementById('tv-video');
+  var soon = document.getElementById('tv-soon'), bigPlay = document.getElementById('tv-play'), bar = document.getElementById('tv-bar');
+  var seek = document.getElementById('tv-seek'), time = document.getElementById('tv-time');
+  var tIcon = document.getElementById('tv-toggle-icon'), mIcon = document.getElementById('tv-mute-icon');
+  var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
+  var SOUND = mIcon.getAttribute('d'), MUTED = 'M4 9h4l5-4v14l-5-4H4zM16 9l5 6M21 9l-5 6';
+  function clock(t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + t % 60).slice(-2); }
+  function showVideo() {
+    soon.hidden = true; video.hidden = false; bigPlay.hidden = false; bar.hidden = false;
+    video.preload = 'metadata'; video.load();
+    fetch('trailer/poster.jpg', { method: 'HEAD' }).then(function (r) {
+      if (r.ok && /image/.test(r.headers.get('content-type') || '')) video.poster = 'trailer/poster.jpg';
+    }).catch(function () {});
+  }
+  fetch('trailer/trailer.mp4', { method: 'HEAD' }).then(function (r) {
+    if (r.ok && !/text\/html/.test(r.headers.get('content-type') || '')) showVideo();
+  }).catch(function () {});
+  function toggle() { if (video.paused) video.play(); else video.pause(); }
+  bigPlay.addEventListener('click', toggle);
+  video.addEventListener('click', toggle);
+  var tBtn = document.getElementById('tv-toggle'); tBtn.addEventListener('click', toggle);
+  video.addEventListener('play', function () { tv.classList.add('playing'); bigPlay.hidden = true; tIcon.setAttribute('d', PAUSE); tBtn.setAttribute('aria-label', 'Pause'); idle(); });
+  video.addEventListener('pause', function () { tv.classList.remove('playing'); bigPlay.hidden = false; tIcon.setAttribute('d', PLAY); tBtn.setAttribute('aria-label', 'Play'); bar.classList.remove('idle'); });
+  video.addEventListener('ended', function () { video.currentTime = 0; });
+  video.addEventListener('timeupdate', function () {
+    if (video.duration) seek.value = Math.round(video.currentTime / video.duration * 1000);
+    time.textContent = clock(video.currentTime) + ' / ' + clock(video.duration);
+  });
+  video.addEventListener('loadedmetadata', function () { time.textContent = '0:00 / ' + clock(video.duration); });
+  seek.addEventListener('input', function () { if (video.duration) video.currentTime = seek.value / 1000 * video.duration; });
+  document.getElementById('tv-mute').addEventListener('click', function () {
+    video.muted = !video.muted; mIcon.setAttribute('d', video.muted ? MUTED : SOUND);
+    this.setAttribute('aria-label', video.muted ? 'Unmute' : 'Mute');
+  });
+  document.getElementById('tv-full').addEventListener('click', function () {
+    var el = tv.querySelector('.screen');
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (el.requestFullscreen) el.requestFullscreen();
+    else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+  });
+  var idleTimer;
+  function idle() {
+    bar.classList.remove('idle'); clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!video.paused) bar.classList.add('idle'); }, 2200);
+  }
+  tv.addEventListener('pointermove', idle);
+  bar.addEventListener('focusin', idle);
+  // the marquee bulbs only run while you can see them
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) { tv.style.animationPlayState = es[0].isIntersecting ? 'running' : 'paused'; }).observe(tv);
+  }
 })();
 </script>
 </body>
