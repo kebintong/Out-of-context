@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Out of Context: a rage platformer game show</title>
+<meta name="description" content="Out of Context is a free single-player 3D rage platformer for Windows. Twelve troll stages, two bosses, and a game show host who roasts every fall. Download it and check the SHA-256 checksum.">
+<meta property="og:title" content="Out of Context">
+<meta property="og:description" content="A rage platformer game show. Twelve troll stages, two bosses, one host who never stops talking.">
+<meta name="theme-color" content="#241047">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/TitanOne-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<script id="release-data" type="application/json">{"version": "1.0.0", "file": "download/OutOfContext.exe", "name": "OutOfContext.exe", "size": 40379710, "sha256": "3989BB1B3BE984ED52E5122BC3576A4A8D107422FA79843FAF13FE849A575757", "date": "2026-10-17"}</script>
+<style>
+  @font-face { font-family: "Titan One"; src: url("fonts/TitanOne-Regular.ttf") format("truetype"); font-display: swap; }
+  @font-face { font-family: "Rubik"; src: url("fonts/rubik-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Rubik"; src: url("fonts/rubik-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+  @font-face { font-family: "Rubik"; src: url("fonts/rubik-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  :root {
+    --night: #241047;
+    --night-2: #2f1660;
+    --paper: #FFF8F0;
+    --ink: #2B1B4A;
+    --ink-soft: #5d4e7a;
+    --pink: #FF3D8F;
+    --pink-soft: #FF7EB6;
+    --yellow: #FFD23F;
+    --cyan: #3DDCFF;
+    --lime: #9BE564;
+    --orange: #FF8C42;
+    --purple: #9B5DE5;
+    --lime-dark: #5aa82c;
+    --radius-big: 28px;
+    --radius: 16px;
+    --display: "Titan One", "Arial Rounded MT Bold", system-ui, sans-serif;
+    --body: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--night);
+    color: var(--ink);
+    font: 400 17px/1.6 var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 8px; }
+  .wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+
+  /* ------------------------------------------------------------------ hero */
+  .hero {
+    color: var(--paper);
+    padding: 28px 0 0;
+    background: var(--night);
+    overflow: hidden;
+  }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .topbar .mark { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 20px; text-decoration: none; }
+  .topbar .mark svg { width: 34px; height: 34px; }
+  .topbar nav { display: flex; gap: 22px; font-weight: 500; font-size: 15px; }
+  .topbar nav a { text-decoration: none; opacity: .85; }
+  .topbar nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    align-items: center;
+    gap: 24px;
+    padding-top: 40px;
+  }
+  .title {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(56px, 9.2vw, 118px);
+    line-height: .92;
+    letter-spacing: .01em;
+  }
+  .title .line { display: block; white-space: nowrap; }
+  .title .l {
+    display: inline-block;
+    color: var(--c);
+    text-shadow: 0 6px 0 #170a30, 0 0 0 #170a30;
+    -webkit-text-stroke: 3px #170a30;
+    paint-order: stroke fill;
+    animation: drop .7s cubic-bezier(.3, 1.6, .5, 1) both;
+    animation-delay: calc(var(--i) * 55ms + 120ms);
+  }
+  .title .gap { display: inline-block; width: .32em; }
+  @keyframes drop {
+    from { transform: translateY(-120%) rotate(var(--r, -8deg)); opacity: 0; }
+    60% { opacity: 1; }
+    to { transform: translateY(0) rotate(var(--rr, 0deg)); opacity: 1; }
+  }
+  .tag {
+    display: inline-block;
+    margin: 22px 0 0;
+    padding: 8px 20px 9px;
+    background: var(--pink);
+    color: #fff;
+    border-radius: 999px;
+    font-family: var(--display);
+    font-size: clamp(18px, 2.2vw, 24px);
+    transform: rotate(-2deg);
+    box-shadow: 0 5px 0 #a3134f;
+  }
+  .lede { max-width: 34em; margin: 26px 0 0; font-size: 19px; color: #e9e0ff; }
+
+  .get {
+    margin: 30px 0 46px;
+    padding: 20px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: var(--radius-big);
+    max-width: 560px;
+  }
+  .get-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 16px 26px 17px;
+    background: var(--lime);
+    color: #193300;
+    border-radius: 18px;
+    font-family: var(--display);
+    font-size: 24px;
+    text-decoration: none;
+    box-shadow: 0 6px 0 var(--lime-dark);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .btn svg { width: 26px; height: 26px; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--lime-dark); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--lime-dark); }
+  .btn[aria-disabled="true"] { filter: grayscale(.7); opacity: .7; pointer-events: none; }
+  .meta { font-size: 15px; color: #d6cbf2; line-height: 1.45; }
+  .meta strong { color: #fff; font-weight: 500; }
+  .hash {
+    margin-top: 16px;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0, 0, 0, .28);
+    border-radius: 12px;
+    padding: 10px 10px 10px 14px;
+  }
+  .hash .k { font-size: 13px; font-weight: 700; color: var(--cyan); flex: none; }
+  .hash code {
+    flex: 1; min-width: 0;
+    font: 500 13px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+  .copy {
+    flex: none;
+    border: 0; cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font: 500 14px var(--body);
+  }
+  .copy:hover { background: rgba(255, 255, 255, .2); }
+  .get .help { margin: 12px 2px 0; font-size: 14px; color: #cfc3ee; }
+  .get .help a { color: #fff; }
+
+  /* the stage: robot on a candy platform, the Moderator floating above */
+  .scene { position: relative; height: 600px; margin-bottom: 46px; }
+  /* a round candy pedestal like the stages' platforms */
+  .platform { position: absolute; left: 8%; right: 6%; bottom: 0; height: 150px; }
+  .platform .side {
+    position: absolute; left: 0; right: 0; top: 44px; bottom: 0;
+    background: linear-gradient(90deg, #b8306f, #d9579a 45%, #b8306f);
+    border-radius: 0 0 44% 44% / 0 0 34% 34%;
+  }
+  .platform .top {
+    position: absolute; left: 0; right: 0; top: 0; height: 92px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(#ffffff 0 25%, #ffd0e4 0 50%) 0 0 / 46px 46px;
+    box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .08);
+  }
+  .robot { position: absolute; left: 50%; transform: translateX(-56%); bottom: 82px; width: 58%; max-width: 320px; filter: drop-shadow(0 16px 10px rgba(20, 0, 50, .35)); }
+  .mod {
+    position: absolute; right: 0; top: 70px; width: 34%; max-width: 190px;
+    background: none; border: 0; padding: 0; cursor: pointer;
+    animation: hover 3.2s ease-in-out infinite;
+  }
+  .mod svg { width: 100%; height: auto; display: block; }
+  .mod:active svg { transform: rotate(-14deg) scale(.95); }
+  .mod .rotor { transform-origin: 80px 22px; animation: spin .5s linear infinite; }
+  @keyframes hover { 50% { transform: translateY(12px); } }
+  @keyframes spin { to { transform: scaleX(-1); } }
+  .bubble {
+    position: absolute; right: 31%; top: 14px; width: min(280px, 62%);
+    background: var(--paper); color: var(--ink);
+    border-radius: 20px 20px 4px 20px;
+    padding: 12px 16px;
+    font-size: 15px; line-height: 1.4; font-weight: 500;
+    box-shadow: 0 5px 0 rgba(0, 0, 0, .2);
+  }
+  .bubble small { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-soft); font-weight: 400; }
+
+  /* ------------------------------------------------------------------ sections on paper */
+  main { background: var(--night); padding: 0 0 70px; }
+  .sheet {
+    background: var(--paper);
+    border-radius: var(--radius-big);
+    padding: clamp(28px, 5vw, 60px);
+    margin-top: 28px;
+  }
+  .sheet:first-child { margin-top: 0; }
+  h2 {
+    margin: 0 0 8px;
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(30px, 4.4vw, 46px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .sub { margin: 0 0 30px; color: var(--ink-soft); max-width: 40em; font-size: 18px; }
+  h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.2; }
+  p { margin: 0 0 12px; }
+
+  /* the show: stage board + what's inside */
+  .show { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 44px; align-items: start; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile {
+    border-radius: 14px;
+    padding: 10px 12px 12px;
+    background: #fff;
+    box-shadow: 0 4px 0 rgba(43, 27, 74, .12);
+    min-height: 88px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .tile .n {
+    align-self: flex-start;
+    font-family: var(--display); font-size: 14px; color: #fff;
+    background: var(--c); border-radius: 8px; padding: 2px 9px 3px;
+  }
+  .tile .name { font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .tile.boss { background: var(--ink); color: #fff; }
+  .board-note { margin-top: 12px; font-size: 14px; color: var(--ink-soft); }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+  .list li { display: grid; grid-template-columns: 18px 1fr; gap: 14px; }
+  .list li::before { content: ""; width: 14px; height: 14px; margin-top: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 3px 0 rgba(0, 0, 0, .15); }
+  .list p { margin: 0; color: var(--ink-soft); }
+
+  /* verify */
+  .verify { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 44px; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 22px; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+  .steps code, .reqs code, p code { overflow-wrap: anywhere; }
+  .steps li::before {
+    content: counter(s);
+    display: grid; place-items: center;
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--ink); color: var(--yellow);
+    font-family: var(--display); font-size: 20px;
+  }
+  .steps p { margin: 4px 0 0; color: var(--ink-soft); }
+  pre {
+    margin: 10px 0 0;
+    background: var(--ink); color: #f3edff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font: 500 14px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .expected {
+    background: #fff;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 5px 0 rgba(43, 27, 74, .12);
+    align-self: start;
+  }
+  .expected h3 { font-size: 20px; }
+  .expected .bighash {
+    margin: 12px 0 14px;
+    font: 600 17px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+    letter-spacing: .02em;
+  }
+  .expected .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 15px; margin: 0 0 16px; }
+  .expected dt { color: var(--ink-soft); }
+  .expected dd { margin: 0; font-weight: 500; }
+  .btn-ghost {
+    border: 0; cursor: pointer;
+    padding: 10px 16px; border-radius: 12px;
+    background: var(--ink); color: #fff;
+    font: 500 15px var(--body);
+  }
+  .btn-ghost + a { margin-left: 12px; font-size: 15px; }
+  .match { margin-top: 18px; display: grid; gap: 8px; }
+  .match label { font-size: 15px; font-weight: 500; }
+  .match input {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    border: 2px solid #e2d9ef; background: var(--paper);
+    font: 500 14px ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--ink);
+  }
+  .match input:focus { border-color: var(--purple); outline: none; }
+  .verdict { min-height: 1.5em; font-weight: 700; font-size: 15px; }
+  .verdict.ok { color: #2f7a12; }
+  .verdict.bad { color: #c2185b; }
+  .smartscreen { margin-top: 30px; padding: 18px 20px; border-radius: 16px; background: #fff3c4; }
+  .smartscreen p:last-child { margin: 0; }
+
+  /* controls + requirements */
+  .two { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 44px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 10px; vertical-align: top; }
+  thead th { font-family: var(--display); font-weight: 400; font-size: 16px; color: var(--ink-soft); border-bottom: 2px solid #eadff3; }
+  tbody tr + tr td { border-top: 1px solid #f0e8f6; }
+  tbody td:first-child { font-weight: 500; }
+  kbd {
+    display: inline-block; padding: 1px 7px 2px; border-radius: 6px;
+    background: #fff; border: 1px solid #ddd0ea; box-shadow: 0 2px 0 #ddd0ea;
+    font: 600 13px var(--body); color: var(--ink); white-space: nowrap;
+  }
+  .reqs { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 16px; }
+  .reqs li { padding-left: 22px; position: relative; }
+  .reqs li::before { content: ""; position: absolute; left: 0; top: .55em; width: 10px; height: 10px; border-radius: 3px; background: var(--cyan); }
+
+  /* credits / footer */
+  .credits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; margin: 0; padding: 0; list-style: none; }
+  .credits b { display: block; font-size: 17px; }
+  .credits span { color: var(--ink-soft); font-size: 15px; }
+  footer { color: #bfb2e0; font-size: 14px; padding: 30px 0 50px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+  /* ------------------------------------------------------------------ responsive */
+  @media (max-width: 900px) {
+    .hero-grid, .show, .verify, .two { grid-template-columns: 1fr; }
+    .scene { height: 460px; max-width: 520px; width: 100%; margin: 0 auto 30px; }
+    .get { margin-bottom: 34px; }
+    .credits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .topbar nav { display: none; }
+    .scene { height: 400px; }
+    .platform { height: 120px; }
+    .platform .top { height: 70px; }
+    .robot { bottom: 64px; }
+    .board { grid-template-columns: repeat(2, 1fr); }
+    .btn { width: 100%; justify-content: center; }
+    .credits { grid-template-columns: 1fr; }
+    .title .l { -webkit-text-stroke-width: 2px; text-shadow: 0 4px 0 #170a30; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .title .l, .mod, .mod .rotor { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="mark" href="#top" aria-label="Out of Context home">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="34" rx="28" ry="23" fill="#F2F4F8"/><ellipse cx="32" cy="37" rx="21" ry="14" fill="#172640"/><path d="M20 38q4-6 8 0M36 38q4-6 8 0" stroke="#7FD3FF" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+        Out of Context
+      </a>
+      <nav aria-label="Sections">
+        <a href="#show">The show</a>
+        <a href="#verify">Check your download</a>
+        <a href="#controls">Controls</a>
+        <a href="#credits">Credits</a>
+      </nav>
+    </div>
+
+    <div class="hero-grid" id="top">
+      <div>
+        <h1 class="title" aria-label="Out of Context">
+          <span class="line" aria-hidden="true" id="t1"></span>
+          <span class="line" aria-hidden="true" id="t2"></span>
+        </h1>
+        <span class="tag">Welcome to Peak Nonsense</span>
+        <p class="lede">A single-player 3D rage platformer dressed up as a game show. Fake floors, fake save points, two bosses and a host who roasts every single fall. Free for Windows.</p>
+
+        <div class="get" id="download">
+          <div class="get-row">
+            <a class="btn" id="dl" href="download/OutOfContext.exe" download>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Download for Windows
+            </a>
+            <div class="meta">
+              <strong data-r="name">OutOfContext.exe</strong><br>
+              Version <span data-r="version">1.0.0</span> · <span data-r="size">—</span> · Windows 10 and 11
+            </div>
+          </div>
+          <div class="hash">
+            <span class="k">SHA-256</span>
+            <code data-r="sha256">—</code>
+            <button class="copy" type="button" data-copy="sha256">Copy</button>
+          </div>
+          <p class="help">One file, no installer. <a href="#verify">Check the file matches</a> before you run it.</p>
+        </div>
+      </div>
+
+      <div class="scene">
+        <div class="bubble" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
+        <button class="mod" id="mod" type="button" aria-label="Poke the Moderator">
+          <svg viewBox="0 0 160 150" aria-hidden="true">
+            <rect x="77" y="22" width="6" height="18" rx="2" fill="#15161C"/>
+            <g class="rotor"><rect x="20" y="16" width="120" height="7" rx="3.5" fill="#FFD23F"/><ellipse cx="80" cy="19" rx="10" ry="5" fill="#F2F4F8"/></g>
+            <ellipse cx="27" cy="84" rx="9" ry="22" fill="#F2F4F8"/>
+            <ellipse cx="133" cy="84" rx="9" ry="22" fill="#F2F4F8"/>
+            <circle cx="140" cy="74" r="5" fill="#FF3B3B"/>
+            <ellipse cx="80" cy="82" rx="56" ry="45" fill="#FF3D8F"/>
+            <ellipse cx="68" cy="58" rx="22" ry="9" fill="#ff7ab0" opacity=".55"/>
+            <ellipse cx="80" cy="88" rx="44" ry="29" fill="#15161C"/>
+            <ellipse cx="80" cy="88" rx="40" ry="25" fill="#1B1F3A"/>
+            <path d="M58 88q7-9 14 0M88 88q7-9 14 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M74 100q6 5 12 0" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <ellipse cx="20" cy="132" rx="13" ry="11" fill="#F2F4F8"/>
+            <ellipse cx="140" cy="132" rx="13" ry="11" fill="#F2F4F8"/>
+          </svg>
+        </button>
+        <svg class="robot" viewBox="0 0 200 240" role="img" aria-label="The player, a little white robot with a big helmet and a blue belly panel">
+          <defs>
+            <radialGradient id="shine" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#eef1f7"/><stop offset="1" stop-color="#cfd6e6"/></radialGradient>
+          </defs>
+          <ellipse cx="82" cy="226" rx="13" ry="8" fill="url(#shine)"/>
+          <ellipse cx="118" cy="226" rx="13" ry="8" fill="url(#shine)"/>
+          <ellipse cx="50" cy="160" rx="15" ry="26" transform="rotate(24 50 160)" fill="url(#shine)"/>
+          <ellipse cx="150" cy="160" rx="15" ry="26" transform="rotate(-24 150 160)" fill="url(#shine)"/>
+          <ellipse cx="100" cy="168" rx="43" ry="47" fill="url(#shine)"/>
+          <path d="M58 163h84" stroke="#15161C" stroke-width="2.4" opacity=".75"/>
+          <path d="M79 170h42q0 24-21 24t-21-24z" fill="#5CC3F0" stroke="#15161C" stroke-width="2.2"/>
+          <ellipse cx="42" cy="70" rx="8" ry="23" transform="rotate(-14 42 70)" fill="url(#shine)"/>
+          <ellipse cx="158" cy="70" rx="8" ry="23" transform="rotate(14 158 70)" fill="url(#shine)"/>
+          <ellipse cx="37" cy="106" rx="9" ry="24" fill="url(#shine)"/>
+          <ellipse cx="163" cy="106" rx="9" ry="24" fill="url(#shine)"/>
+          <rect x="81" y="44" width="38" height="15" rx="7" fill="url(#shine)"/>
+          <ellipse cx="100" cy="104" rx="64" ry="53" fill="url(#shine)"/>
+          <ellipse cx="100" cy="110" rx="51" ry="34" fill="#15161C"/>
+          <ellipse cx="100" cy="110" rx="47" ry="30" fill="#172640"/>
+          <ellipse cx="82" cy="96" rx="20" ry="6" fill="#ffffff" opacity=".08"/>
+          <path d="M70 110q10-12 20 0M110 110q10-12 20 0" stroke="#7FD3FF" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+          <path d="M93 124q7 6 14 0" stroke="#7FD3FF" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="platform" aria-hidden="true"><div class="side"></div><div class="top"></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section class="sheet" id="show" aria-labelledby="show-h">
+      <h2 id="show-h">Twelve stages. Two bosses. One host who won't stop talking.</h2>
+      <p class="sub">Inspired by I Wanna Be the Guy and Fever Meme, with a Fall Guys look. Everything that looks helpful is probably a trap.</p>
+      <div class="show">
+        <div>
+          <div class="board" id="board"></div>
+          <p class="board-note">Then the finale, the Reset Core, and the final boss. Beat the show to unlock Stage Select, Boss Rematch and Remix.</p>
+        </div>
+        <ul class="list">
+          <li style="--c: var(--pink)"><div><h3>The Moderator</h3><p>A floating robot host who comments on every fall, lies about which door is safe, and keeps count of everything. You can poke him. He keeps count of that too.</p></div></li>
+          <li style="--c: var(--yellow)"><div><h3>Traps that troll back</h3><p>Fake floors, fake save pods, spikes that come back, platforms that dodge you, and a skip button that does not skip.</p></div></li>
+          <li style="--c: var(--cyan)"><div><h3>A quiz show</h3><p>Stand on the right answer before the timer runs out: nonsense math plus Philippine geography and history.</p></div></li>
+          <li style="--c: var(--purple)"><div><h3>The Algorithm and MOD.EXE</h3><p>Two boss fights with ban hammers, deleted floors, lasers to jump and duck, and parries that send shots back.</p></div></li>
+          <li style="--c: var(--lime)"><div><h3>After the credits</h3><p>Stage Select with best times, Boss Rematch with a Flawless badge, Remix mode with the traps moved, and 28 achievements.</p></div></li>
+          <li style="--c: var(--orange)"><div><h3>Plays how you like</h3><p>Keyboard and mouse or an Xbox or PlayStation controller. Five graphics presets from Performance to Ultra, so it runs on laptops too.</p></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sheet" id="verify" aria-labelledby="verify-h">
+      <h2 id="verify-h">Check your download</h2>
+      <p class="sub">The SHA-256 checksum is a fingerprint of the file. If yours matches the one below, you have exactly the file we published, nothing changed or broken along the way.</p>
+      <div class="verify">
+        <ol class="steps">
+          <li><div><h3>Download the game</h3><p>Save <b data-r="name">OutOfContext.exe</b> to your Downloads folder.</p></div></li>
+          <li><div><h3>Open PowerShell</h3><p>Right-click the Start button and choose Terminal (or Windows PowerShell).</p></div></li>
+          <li><div><h3>Get the file's checksum</h3><p>Paste this and press Enter:</p><pre id="cmd">Get-FileHash "$env:USERPROFILE\Downloads\OutOfContext.exe" -Algorithm SHA256</pre><p>Using Command Prompt instead? <code>certutil -hashfile "%USERPROFILE%\Downloads\OutOfContext.exe" SHA256</code></p></div></li>
+          <li><div><h3>Compare</h3><p>The Hash line should match the checksum on the right, letter for letter. Paste it into the box to check automatically.</p></div></li>
+        </ol>
+        <div class="expected">
+          <h3>Published checksum</h3>
+          <div class="bighash" data-r="sha256">—</div>
+          <dl class="facts">
+            <dt>File</dt><dd data-r="name">OutOfContext.exe</dd>
+            <dt>Version</dt><dd data-r="version">1.0.0</dd>
+            <dt>Size</dt><dd data-r="bytes">—</dd>
+            <dt>Released</dt><dd data-r="date">—</dd>
+          </dl>
+          <button class="btn-ghost" type="button" data-copy="sha256">Copy checksum</button>
+          <a href="SHA256SUMS.txt">SHA256SUMS.txt</a>
+          <div class="match">
+            <label for="paste">Paste your result to compare</label>
+            <input id="paste" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 3F9A…">
+            <div class="verdict" id="verdict" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+      <div class="smartscreen">
+        <h3>"Windows protected your PC"?</h3>
+        <p>That message appears for games from small studios that don't pay for a code-signing certificate. If the checksum matches, click <b>More info</b>, then <b>Run anyway</b>. The first launch unpacks the game for a few seconds; after that it starts straight away.</p>
+      </div>
+    </section>
+
+    <section class="sheet" id="controls" aria-labelledby="controls-h">
+      <div class="two">
+        <div>
+          <h2 id="controls-h">Controls</h2>
+          <p class="sub">Plug in a controller any time; the game switches over automatically.</p>
+          <table>
+            <thead><tr><th scope="col">Action</th><th scope="col">Keyboard and mouse</th><th scope="col">Controller</th></tr></thead>
+            <tbody>
+              <tr><td>Move and look</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> and the mouse</td><td>Left and right stick</td></tr>
+              <tr><td>Jump, double jump</td><td><kbd>Space</kbd></td><td>A / Cross</td></tr>
+              <tr><td>Dive</td><td><kbd>Shift</kbd></td><td>X / Square</td></tr>
+              <tr><td>Crouch, save, parry</td><td><kbd>C</kbd> or <kbd>Ctrl</kbd></td><td>B / Circle</td></tr>
+              <tr><td>Shoot</td><td>Left click</td><td>RT / R2</td></tr>
+              <tr><td>Interact</td><td><kbd>E</kbd></td><td>Y / Triangle</td></tr>
+              <tr><td>Retry from last save</td><td><kbd>R</kbd></td><td>View / Share</td></tr>
+              <tr><td>Pause</td><td><kbd>Esc</kbd></td><td>Menu / Options</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h2>What you need</h2>
+          <p class="sub">It's built to run on school laptops.</p>
+          <ul class="reqs">
+            <li>Windows 10 or 11, 64-bit</li>
+            <li>Any graphics card with DirectX 11, including laptop integrated graphics</li>
+            <li>4 GB of memory</li>
+            <li>About 200 MB of free space</li>
+            <li>Optional: an Xbox or PlayStation controller</li>
+          </ul>
+          <p style="margin-top:18px;color:var(--ink-soft);font-size:15px">Your saves stay on your PC. Uninstalling is deleting the file and the folder <code>%LOCALAPPDATA%\OutOfContext</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet" id="credits" aria-labelledby="credits-h">
+      <h2 id="credits-h">Made by</h2>
+      <p class="sub">A Game Dev 101 project.</p>
+      <ul class="credits">
+        <li><b>Kevin Jheazer P. Villaro</b><span>Project Manager and Programmer</span></li>
+        <li><b>Angelo T. Sumarago</b><span>Audio Designer</span></li>
+        <li><b>Clark Kent Gomez</b><span>Senior Developer</span></li>
+        <li><b>Kian T. Berong</b><span>Model Animator</span></li>
+        <li><b>Samantha Ongue</b><span>Documentation Lead</span></li>
+        <li><b>Josh Patrick Yecyec</b><span>QA Tester</span></li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Out of Context. Made in Unity. Fonts: Titan One and Rubik (SIL Open Font License).</span>
+    <a href="#top">Back to the top</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // ---------- release info (filled in by update_release.py)
+  var rel = {};
+  try { rel = JSON.parse(document.getElementById('release-data').textContent); } catch (e) {}
+  function mb(n) { return n > 0 ? (n / 1048576).toFixed(1) + ' MB' : '—'; }
+  function fmtDate(s) {
+    var d = new Date(s + 'T00:00:00');
+    return isNaN(d) ? s : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  var ready = rel.sha256 && rel.sha256 !== 'PENDING';
+  var values = {
+    name: rel.name || 'OutOfContext.exe',
+    version: rel.version || '1.0.0',
+    size: mb(rel.size),
+    bytes: rel.size > 0 ? mb(rel.size) + ' (' + rel.size.toLocaleString() + ' bytes)' : '—',
+    sha256: ready ? rel.sha256 : 'Published with the next build',
+    date: rel.date ? fmtDate(rel.date) : '—'
+  };
+  document.querySelectorAll('[data-r]').forEach(function (el) { el.textContent = values[el.getAttribute('data-r')]; });
+  var dl = document.getElementById('dl');
+  if (rel.file) dl.setAttribute('href', rel.file);
+  if (!ready) dl.setAttribute('aria-disabled', 'true');
+
+  // ---------- copy buttons
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var text = values[b.getAttribute('data-copy')];
+      var label = b.textContent;
+      function done() { b.textContent = 'Copied'; setTimeout(function () { b.textContent = label; }, 1600); }
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+      else {
+        var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(t);
+      }
+    });
+  });
+
+  // ---------- compare pasted checksum
+  var paste = document.getElementById('paste'), verdict = document.getElementById('verdict');
+  paste.addEventListener('input', function () {
+    var m = paste.value.toUpperCase().match(/[0-9A-F]{64}/);
+    if (!paste.value.trim()) { verdict.textContent = ''; verdict.className = 'verdict'; return; }
+    if (!m) { verdict.textContent = 'That doesn\'t look like a SHA-256 checksum yet (64 letters and numbers).'; verdict.className = 'verdict bad'; return; }
+    if (!ready) { verdict.textContent = 'There is no published checksum to compare with yet.'; verdict.className = 'verdict bad'; return; }
+    if (m[0] === rel.sha256.toUpperCase()) { verdict.textContent = 'It matches. Safe to play.'; verdict.className = 'verdict ok'; }
+    else { verdict.textContent = 'It does not match. Delete that file and download it again from this page.'; verdict.className = 'verdict bad'; }
+  });
+
+  // ---------- title letters (the game's main menu colours)
+  var cols = ['#FF7EB6', '#FFD23F', '#3DDCFF', '#9BE564', '#FF8C42', '#9B5DE5'];
+  var k = 0;
+  function letters(el, word) {
+    for (var i = 0; i < word.length; i++) {
+      if (word[i] === ' ') { var g = document.createElement('span'); g.className = 'gap'; el.appendChild(g); continue; }
+      var s = document.createElement('span');
+      s.className = 'l'; s.textContent = word[i];
+      s.style.setProperty('--c', cols[k % cols.length]);
+      s.style.setProperty('--i', k);
+      s.style.setProperty('--r', ((k % 3) - 1) * 10 + 'deg');
+      s.style.setProperty('--rr', ((k * 7) % 5 - 2) + 'deg');
+      el.appendChild(s); k++;
+    }
+  }
+  letters(document.getElementById('t1'), 'OUT OF');
+  letters(document.getElementById('t2'), 'CONTEXT');
+
+  // ---------- stage board
+  var stages = ['Warm-Up', 'Slime Jumps', 'Checkerboard of Lies', 'Choose a Door', 'Disappearing Stairs', 'Rush Hour',
+                'The Quiz Show', 'The Comment Section', 'Out of Context', 'Sponsor Segment', 'Now Loading', 'Vs. The Algorithm'];
+  var stageCols = ['#FF7EB6', '#9BE564', '#3DDCFF', '#FF8C42', '#9B5DE5', '#e8b400', '#FF7EB6', '#4D7CFE', '#FF3D8F', '#FF8C42', '#22b8dd', '#9B5DE5'];
+  var board = document.getElementById('board');
+  stages.forEach(function (name, i) {
+    var t = document.createElement('div');
+    t.className = 'tile' + (i === 11 ? ' boss' : '');
+    t.style.setProperty('--c', stageCols[i]);
+    t.innerHTML = '<span class="n">' + (i < 9 ? '0' : '') + (i + 1) + '</span><span class="name"></span>';
+    t.querySelector('.name').textContent = name;
+    board.appendChild(t);
+  });
+
+  // ---------- poke the Moderator
+  var lines = [
+    'Hey! No touching the host.', 'That tickles!', 'Boop received. Boop logged.', "I'm ON CAMERA, you know.",
+    'Do you poke all your game show hosts?', 'Careful, I bruise. Digitally.', 'Every poke is logged. Every. Single. One.',
+    'The download button is the green one. I am the pink one. Please stop clicking the pink one.',
+    'Poking a moderator. Bold. Very bold.', 'I will add this to your permanent record.'
+  ];
+  var pokes = 0, bubble = document.getElementById('bubble');
+  document.getElementById('mod').addEventListener('click', function () {
+    pokes++;
+    var line = pokes === 10 ? 'Ten pokes. You are officially my most annoying fan. Now go download the game.' : lines[(pokes - 1) % lines.length];
+    bubble.innerHTML = '';
+    bubble.appendChild(document.createTextNode(line));
+    var s = document.createElement('small'); s.textContent = 'Pokes: ' + pokes; bubble.appendChild(s);
+  });
+})();
+</script>
+</body>
+</html>
