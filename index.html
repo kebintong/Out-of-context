@@ -11,6 +11,12 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/TitanOne-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <script id="release-data" type="application/json">{"version": "1.0.0", "file": "download/OutOfContext.exe", "name": "OutOfContext.exe", "size": 40379710, "sha256": "3989BB1B3BE984ED52E5122BC3576A4A8D107422FA79843FAF13FE849A575757", "date": "2026-10-17"}</script>
+<script>
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+</script>
 <style>
   @font-face { font-family: "Titan One"; src: url("fonts/TitanOne-Regular.ttf") format("truetype"); font-display: swap; }
   @font-face { font-family: "Rubik"; src: url("fonts/rubik-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -36,7 +42,7 @@
     --body: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: 30px; }
   body {
     margin: 0;
     background: var(--night);
@@ -194,7 +200,27 @@
     border-radius: 20px 20px 4px 20px;
     padding: 12px 16px;
     font-size: 15px; line-height: 1.4; font-weight: 500;
-    box-shadow: 0 5px 0 rgba(0, 0, 0, .2);
+    box-shadow: 0 4px 0 rgba(43, 27, 74, .18), 0 8px 24px rgba(0, 0, 0, .2);
+    border: 2px solid rgba(255, 255, 255, .8);
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    top: 24px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 11px solid var(--paper);
+  }
+  .bubble.changing, .mod-ghost-bubble.changing {
+    opacity: 0 !important;
+    transform: scale(0.92) translateY(4px) !important;
+    transition: opacity .12s ease-in, transform .12s ease-in;
   }
   .bubble small { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-soft); font-weight: 400; }
 
@@ -323,7 +349,23 @@
   .credits b { display: block; font-size: 17px; }
   .credits span { color: var(--ink-soft); font-size: 15px; }
   footer { color: #bfb2e0; font-size: 14px; padding: 30px 0 50px; }
-  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .back-top {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px 13px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: #fff;
+    border-radius: 999px;
+    font-family: var(--display);
+    font-size: 15px;
+    text-decoration: none;
+    box-shadow: 0 4px 0 rgba(155, 93, 229, .4), 0 8px 24px rgba(155, 93, 229, .2);
+    transition: transform .12s ease, box-shadow .12s ease;
+    letter-spacing: .01em;
+  }
+  .back-top svg { width: 16px; height: 16px; flex: none; }
+  .back-top:hover { transform: translateY(-3px); box-shadow: 0 6px 0 rgba(155, 93, 229, .4), 0 12px 28px rgba(155, 93, 229, .3); }
+  .back-top:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(155, 93, 229, .4); }
 
 
   [hidden] { display: none !important; }
@@ -372,6 +414,26 @@
   .mod-svg { transform-origin: 50% 55%; }
   .mod-svg.roll { animation: roll .7s cubic-bezier(.4, .1, .3, 1); }
   @keyframes roll { to { transform: rotate(360deg); } }
+  .mod.poked .mod-svg, .mod-ghost.poked .mod-svg {
+    animation: pokeSquish .45s cubic-bezier(.3, 1.8, .5, 1);
+  }
+  @keyframes pokeSquish {
+    0% { transform: scale(1, 1); }
+    25% { transform: scale(1.16, .84) translateY(6px); }
+    50% { transform: scale(.9, 1.14) translateY(-8px) rotate(-6deg); }
+    75% { transform: scale(1.05, .95) translateY(2px) rotate(4deg); }
+    100% { transform: scale(1, 1); }
+  }
+  .mod-ghost.fast-spin .rotor, .mod.fast-spin .rotor {
+    animation: spin .12s linear infinite !important;
+  }
+  .mod-ghost.queasy svg, .mod.queasy svg {
+    animation: queasyShake .14s ease-in-out infinite alternate !important;
+  }
+  @keyframes queasyShake {
+    0% { transform: translateY(-4px) rotate(-6deg) scale(0.97); }
+    100% { transform: translateY(4px) rotate(6deg) scale(1.03); }
+  }
   .platform .top { animation: turntable 30s linear infinite; }
   @keyframes turntable { to { background-position: 460px 0; } }
 
@@ -486,34 +548,178 @@
 
   /* ------------------------------------------------------------------ responsive */
   @media (max-width: 900px) {
-    .hero-grid, .show, .verify, .two { grid-template-columns: 1fr; }
-    .scene { height: 460px; max-width: 520px; width: 100%; margin: 0 auto 30px; }
-    .get { margin-bottom: 34px; }
+    .hero-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 20px;
+    }
+    .hero-content {
+      display: contents;
+    }
+    .hero-title-group {
+      order: 1;
+    }
+    .scene {
+      order: 2;
+      height: 340px;
+      max-width: 500px;
+      width: 100%;
+      margin: 6px auto 16px;
+    }
+    .lede {
+      order: 3;
+      text-align: center;
+      margin: 0 auto 16px;
+      max-width: 38em;
+    }
+    .get {
+      order: 4;
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+    .show, .verify, .two { grid-template-columns: 1fr; }
     .credits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 560px) {
     body { font-size: 16px; }
     .topbar nav { display: none; }
-    .scene { height: 400px; }
-    .platform { height: 120px; }
-    .platform .top { height: 70px; }
-    .robot { bottom: 64px; }
+    .scene { height: 310px; }
+    .bubble {
+      position: absolute;
+      left: 8px;
+      right: 106px;
+      top: 10px;
+      width: auto;
+      max-width: calc(100% - 114px);
+      z-index: 35;
+      font-size: 13px;
+      line-height: 1.35;
+      padding: 10px 13px;
+      border-radius: 16px 16px 4px 16px;
+      text-align: left;
+      translate: 0 0 150px;
+      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .25);
+      border: 2px solid #fff;
+    }
+    .bubble::after {
+      content: "";
+      position: absolute;
+      right: -9px;
+      top: 18px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 10px solid var(--paper);
+    }
+    .bubble small { text-align: left; font-size: 11px; margin-top: 3px; }
+    .mod { right: 6px; top: 10px; width: 92px; z-index: 25; }
+    .platform { height: 95px; }
+    .platform .top { height: 58px; }
+    .robot { bottom: 32px; width: 44%; max-width: 160px; }
     .board { grid-template-columns: repeat(2, 1fr); }
     .btn { width: 100%; justify-content: center; }
-    .credits { grid-template-columns: 1fr; }
+    #credits { text-align: center; }
+    #credits h2 { text-align: center; }
+    #credits .sub { text-align: center; margin-left: auto; margin-right: auto; }
+    .credits { grid-template-columns: 1fr; text-align: center; }
+    .credits li { display: flex; flex-direction: column; align-items: center; }
     .title .l { -webkit-text-stroke-width: 2px; text-shadow: 0 4px 0 #170a30; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .title .l, .mod, .mod .rotor, .robot-svg *, .robot.hop .robot-svg, .platform .top, .tv, .soon .soon-big, .tv.playing .onair,
-    .title .l.jump, .tile.fake, .bubble.pop, .mod-svg.roll { animation: none !important; }
-    .stage3d { transform: none !important; }
-    html { scroll-behavior: auto; }
-  }
-  @media (max-width: 560px) {
+    .topbar { justify-content: center; }
+    .topbar .mark { font-size: 22px; }
+    footer .wrap { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+    .mod-ghost { width: 95px; }
+    .mod-ghost-bubble {
+      white-space: normal;
+      max-width: 210px;
+      font-size: 12px;
+      padding: 7px 11px;
+      z-index: 60;
+      text-align: left;
+      border-radius: 14px 14px 4px 14px;
+      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .28);
+      border: 2px solid #fff;
+    }
     .tv { padding: 10px; border-radius: 22px; }
     .tv-play { width: 80px; height: 80px; }
     .tv-play svg { width: 36px; height: 36px; }
     .tv-time { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .title .l, .mod, .mod .rotor, .robot-svg *, .robot.hop .robot-svg, .platform .top, .tv, .soon .soon-big, .tv.playing .onair,
+    .title .l.jump, .tile.fake, .bubble.pop, .mod-svg.roll, .mod.poked .mod-svg, .mod-ghost.poked .mod-svg, .mod-ghost.queasy svg, .mod.queasy svg { animation: none !important; }
+    .stage3d { transform: none !important; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ------------------------------------------------------------------ scroll-following Moderator */
+  .mod-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 120px;
+    height: auto;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    filter: drop-shadow(0 8px 24px rgba(36, 16, 71, .45));
+    transition: opacity .45s ease;
+    will-change: left, top, transform, opacity;
+  }
+  .mod-ghost.visible { opacity: 1; pointer-events: auto; }
+  .mod-ghost .rotor { transform-origin: 80px 22px; animation: spin .5s linear infinite; }
+  .mod-ghost svg { width: 100%; height: auto; display: block; cursor: pointer; }
+
+  /* speech bubble that follows the ghost */
+  .mod-ghost-bubble {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 55;
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 16px 16px 4px 16px;
+    padding: 8px 14px;
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 500;
+    box-shadow: 0 4px 0 rgba(43, 27, 74, .2), 0 8px 24px rgba(36, 16, 71, .3);
+    border: 2px solid rgba(255, 255, 255, .85);
+    opacity: 0;
+    pointer-events: none;
+    white-space: normal;
+    max-width: 260px;
+    transform: scale(0.92) translateY(4px);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1);
+    will-change: left, top, opacity, transform;
+  }
+  .mod-ghost-bubble.visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+  }
+  .mod-ghost-bubble.flip { border-radius: 16px 16px 16px 4px; }
+  .mod-ghost-bubble small { display: block; margin-top: 3px; font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+
+  /* trail particles */
+  .mod-trail {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 39;
+    opacity: 0;
+  }
+
+  @media (max-width: 560px) {
+    .mod-ghost { width: 100px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mod-ghost, .mod-ghost-bubble, .mod-trail { display: none !important; }
   }
 </style>
 </head>
@@ -536,12 +742,14 @@
     </div>
 
     <div class="hero-grid" id="top">
-      <div>
-        <h1 class="title" aria-label="Out of Context">
-          <span class="line" aria-hidden="true" id="t1"></span>
-          <span class="line" aria-hidden="true" id="t2"></span>
-        </h1>
-        <span class="tag">Welcome to Peak Nonsense</span>
+      <div class="hero-content">
+        <div class="hero-title-group">
+          <h1 class="title" aria-label="Out of Context">
+            <span class="line" aria-hidden="true" id="t1"></span>
+            <span class="line" aria-hidden="true" id="t2"></span>
+          </h1>
+          <span class="tag">Welcome to Peak Nonsense</span>
+        </div>
         <p class="lede">A single-player 3D rage platformer dressed up as a game show. Fake floors, fake save points, two bosses and a host who roasts every single fall. Free for Windows.</p>
 
         <div class="get" id="download">
@@ -566,7 +774,7 @@
 
       <div class="scene" id="scene">
        <div class="stage3d" id="stage3d">
-        <div class="bubble" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
+        <div class="bubble visible" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
         <button class="mod" id="mod" type="button" aria-label="Poke the Moderator">
           <svg class="mod-svg" id="mod-svg" viewBox="0 0 160 150" aria-hidden="true">
             <rect x="77" y="22" width="6" height="18" rx="2" fill="#15161C"/>
@@ -578,8 +786,10 @@
             <ellipse cx="68" cy="58" rx="22" ry="9" fill="#ff7ab0" opacity=".55"/>
             <ellipse cx="80" cy="88" rx="44" ry="29" fill="#15161C"/>
             <ellipse cx="80" cy="88" rx="40" ry="25" fill="#1B1F3A"/>
-            <path d="M58 88q7-9 14 0M88 88q7-9 14 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/>
-            <path d="M74 100q6 5 12 0" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <g class="mod-face" id="mod-face">
+              <path d="M58 88q7-9 14 0M88 88q7-9 14 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/>
+              <path d="M74 100q6 5 12 0" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </g>
             <ellipse cx="20" cy="132" rx="13" ry="11" fill="#F2F4F8"/>
             <ellipse cx="140" cy="132" rx="13" ry="11" fill="#F2F4F8"/>
           </svg>
@@ -756,12 +966,30 @@
 <footer>
   <div class="wrap">
     <span>Out of Context. Made in Unity. Fonts: Titan One and Rubik (SIL Open Font License).</span>
-    <a href="#top">Back to the top</a>
+    <a class="back-top" href="#top">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to top
+    </a>
   </div>
 </footer>
 
 <script>
 (function () {
+  // Always scroll to top on reload/refresh
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.addEventListener('beforeunload', function () {
+    window.scrollTo(0, 0);
+  });
+  window.addEventListener('load', function () {
+    window.scrollTo(0, 0);
+  });
+  if (window.location.hash) {
+    history.replaceState(null, null, window.location.pathname + window.location.search);
+    window.scrollTo(0, 0);
+  }
+
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var modSvg = document.getElementById('mod-svg');
   function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
@@ -883,6 +1111,9 @@
         f.style.width = t.offsetWidth + 'px'; f.style.height = t.offsetHeight + 'px';
         board.appendChild(f);
         f.addEventListener('animationend', function () { f.remove(); });
+        if (typeof saySuggestion === 'function' && (window.scrollY || 0) < 650) {
+          saySuggestion({ face: 'shocked', text: "Told you! Fake floor! There are dozens more in the actual game.", sub: "Stage 3 spoiler" }, 4500);
+        }
       });
       t.addEventListener('animationend', function (e) { if (e.animationName === 'fakefall') t.classList.remove('fake'); });
     } else if (!reduced) {
@@ -896,24 +1127,154 @@
     board.appendChild(t);
   });
 
-  // ---------- poke the Moderator
-  var lines = [
-    'Hey! No touching the host.', 'That tickles!', 'Boop received. Boop logged.', "I'm ON CAMERA, you know.",
-    'Do you poke all your game show hosts?', 'Careful, I bruise. Digitally.', 'Every poke is logged. Every. Single. One.',
-    'The download button is the green one. I am the pink one. Please stop clicking the pink one.',
-    'Poking a moderator. Bold. Very bold.', 'I will add this to your permanent record.'
+  // ---------- poke the Moderator (facial expressions + humor)
+  var modFaces = {
+    smug: '<path d="M58 88q7-9 14 0M88 88q7-9 14 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M74 100q6 5 12 0" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>',
+    surprised: '<circle cx="65" cy="87" r="7" fill="#3DDCFF"/><circle cx="67" cy="86" r="2.5" fill="#15161C"/><circle cx="95" cy="87" r="7" fill="#3DDCFF"/><circle cx="97" cy="86" r="2.5" fill="#15161C"/><circle cx="80" cy="101" r="4.5" fill="none" stroke="#FFD23F" stroke-width="3"/>',
+    annoyed: '<path d="M56 88h16M88 88h16" stroke="#FFD23F" stroke-width="5" stroke-linecap="round"/><path d="M56 82l16 2M104 82l-16 2" stroke="#FF7EB6" stroke-width="3" stroke-linecap="round"/><path d="M73 100h14" stroke="#FFD23F" stroke-width="4" stroke-linecap="round"/>',
+    angry: '<path d="M57 84l14 5-14 5M103 84l-14 5 14 5" stroke="#FF2F4F" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M72 101l4-3 4 3 4-3 4 3" stroke="#FF2F4F" stroke-width="3" fill="none" stroke-linecap="round"/>',
+    dizzy: '<path d="M59 83l12 10M71 83l-12 10M89 83l12 10M101 83l-12 10" stroke="#3DDCFF" stroke-width="4" stroke-linecap="round"/><path d="M72 101q4-4 8 0t8 0" stroke="#3DDCFF" stroke-width="3.5" fill="none" stroke-linecap="round"/>',
+    queasy: '<circle cx="65" cy="87" r="7" fill="none" stroke="#9BE564" stroke-width="3"/><circle cx="95" cy="87" r="7" fill="none" stroke="#9BE564" stroke-width="3"/><ellipse cx="53" cy="95" rx="5" ry="3" fill="#9BE564" opacity=".85"/><ellipse cx="107" cy="95" rx="5" ry="3" fill="#9BE564" opacity=".85"/><path d="M72 102q4-6 8 0t8 0" stroke="#9BE564" stroke-width="4" fill="none" stroke-linecap="round"/>',
+    wink: '<path d="M57 89q8 6 15 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="95" cy="87" r="6.5" fill="#FFD23F"/><circle cx="93" cy="85" r="2" fill="#15161C"/><path d="M74 100q7 4 14-4" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>',
+    crying: '<path d="M57 85h16M65 85v9M87 85h16M95 85v9" stroke="#3DDCFF" stroke-width="4.5" stroke-linecap="round"/><ellipse cx="60" cy="98" rx="2" ry="4" fill="#3DDCFF"/><ellipse cx="100" cy="98" rx="2" ry="4" fill="#3DDCFF"/><path d="M73 103q7-5 14 0" stroke="#FFD23F" stroke-width="3.5" fill="none" stroke-linecap="round"/>',
+    cool: '<rect x="52" y="82" width="22" height="11" rx="2" fill="#15161C" stroke="#3DDCFF" stroke-width="2.5"/><rect x="86" y="82" width="22" height="11" rx="2" fill="#15161C" stroke="#3DDCFF" stroke-width="2.5"/><line x1="74" y1="87" x2="86" y2="87" stroke="#3DDCFF" stroke-width="3"/><path d="M74 100q6 4 12 0" stroke="#9BE564" stroke-width="4" fill="none" stroke-linecap="round"/>',
+    sideEye: '<rect x="56" y="86" width="16" height="5" rx="2.5" fill="#FFD23F"/><circle cx="59" cy="88.5" r="3" fill="#FF3D8F"/><rect x="88" y="86" width="16" height="5" rx="2.5" fill="#FFD23F"/><circle cx="91" cy="88.5" r="3" fill="#FF3D8F"/><path d="M73 101q5-3 10 0t5 2" stroke="#FFD23F" stroke-width="3.5" fill="none" stroke-linecap="round"/>',
+    shocked: '<circle cx="65" cy="86" r="7" fill="none" stroke="#3DDCFF" stroke-width="3.5"/><circle cx="95" cy="86" r="7" fill="none" stroke="#3DDCFF" stroke-width="3.5"/><rect x="74" y="96" width="12" height="9" rx="3" fill="#FF3D8F" stroke="#FFD23F" stroke-width="2"/>'
+  };
+
+  function setModFace(el, faceKey) {
+    if (!el) return;
+    el.innerHTML = modFaces[faceKey] || modFaces.smug;
+  }
+
+  // Smooth speech bubble message transition
+  function setBubbleSmooth(bubbleEl, textOrHtml, isHtml) {
+    if (!bubbleEl) return;
+    if (reduced) {
+      if (isHtml) bubbleEl.innerHTML = textOrHtml;
+      else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
+      bubbleEl.classList.add('visible');
+      return;
+    }
+    if (!bubbleEl.classList.contains('visible') || window.getComputedStyle(bubbleEl).opacity === '0') {
+      if (isHtml) bubbleEl.innerHTML = textOrHtml;
+      else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
+      bubbleEl.classList.add('visible');
+      return;
+    }
+
+    bubbleEl.classList.add('changing');
+    setTimeout(function () {
+      if (isHtml) bubbleEl.innerHTML = textOrHtml;
+      else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
+      bubbleEl.classList.add('visible');
+    }, 130);
+  }
+
+
+  var pokeReactions = [
+    { face: 'surprised', text: 'HEY! Personal space is a legal concept, you know!' },
+    { face: 'annoyed', text: 'Do I look like an iPad at an airport kiosk? I have binary feelings.' },
+    { face: 'angry', text: 'THAT IS IT! Adding five fake platforms to Stage 3 out of pure spite.' },
+    { face: 'dizzy', text: 'Error 404: Dignity not found. Internal gyroscope spinning wildly...' },
+    { face: 'wink', text: 'Admit it. You are obsessed with me. I do have stellar aerodynamics.' },
+    { face: 'crying', text: 'Nobody asks HOW is the host. It is always WHERE is the download button...' },
+    { face: 'sideEye', text: 'I am watching your cursor. Do not try anything funny.' },
+    { face: 'cool', text: 'You cannot rattle me, rookie. I am 100% Teflon-coated charisma.' },
+    { face: 'shocked', text: 'SECURITY! There is a rogue cursor assaulting the anchorperson!' },
+    { face: 'annoyed', text: 'The download button is GREEN. I am PINK. Do you need a color check?' },
+    { face: 'angry', text: 'One more poke and I will personally invert your jump key in Unity.' },
+    { face: 'cool', text: 'Go ahead, poke away. My contract guarantees comprehensive hazard pay.' }
   ];
+
   var pokes = 0, bubble = document.getElementById('bubble');
-  document.getElementById('mod').addEventListener('click', function () {
+  var modFace = document.getElementById('mod-face');
+  var modBtn = document.getElementById('mod');
+  var modFaceTimer = null;
+
+  modBtn.addEventListener('click', function () {
     pokes++;
-    var line = pokes === 10 ? 'Ten pokes. You are officially my most annoying fan. Now go download the game.' : lines[(pokes - 1) % lines.length];
-    bubble.innerHTML = '';
-    bubble.appendChild(document.createTextNode(line));
-    var s = document.createElement('small'); s.textContent = 'Pokes: ' + pokes; bubble.appendChild(s);
+    var rx;
+    if (pokes === 10) {
+      rx = { face: 'annoyed', text: 'Ten pokes! You have earned a PhD in Procrastination. Now go download the game.' };
+    } else if (pokes === 20) {
+      rx = { face: 'shocked', text: 'Twenty pokes?! Is this the gameplay you came for?! The actual game has 12 stages!' };
+    } else if (pokes === 30) {
+      rx = { face: 'angry', text: 'Thirty pokes. I am taking an unscheduled coffee break. Talk to the robot.' };
+    } else if (pokes >= 50 && pokes % 10 === 0) {
+      rx = { face: 'dizzy', text: pokes + ' pokes. You win. I am officially exhausted. Press Download!' };
+    } else {
+      rx = pokeReactions[(pokes - 1) % pokeReactions.length];
+    }
+
+    setModFace(modFace, rx.face);
+    var bubbleMsg = rx.text + '<small>Pokes: ' + pokes + '</small>';
+    setBubbleSmooth(bubble, bubbleMsg, true);
     restart(bubble, 'pop');
+
+    // squish micro-animation
+    restart(modBtn, 'poked');
+
     if (pokes % 3 === 0) restart(modSvg, 'roll');
+
+    // revert face to default smug after 3.5s of calm
+    clearTimeout(modFaceTimer);
+    modFaceTimer = setTimeout(function () {
+      setModFace(modFace, 'smug');
+    }, 3500);
+
+    clearTimeout(idleTimer);
+    scheduleIdleSuggestion();
   });
   modSvg.addEventListener('animationend', function (e) { if (e.animationName === 'roll') modSvg.classList.remove('roll'); });
+
+  // ---------- Moderator Suggestions & alive reactions (face changes with every suggestion)
+  var modSuggestions = [
+    { face: 'wink', text: "The download is free, you know. I don't get paid until you press that green button.", sub: "Pro tip" },
+    { face: 'shocked', text: "Wait, you're still reading? The actual game has twelve whole troll stages!", sub: "Gameplay alert" },
+    { face: 'sideEye', text: "Still deciding? The robot has been blinking at you for three straight minutes.", sub: "He's judging you" },
+    { face: 'cool', text: "Stage 12 is totally fair and definitely won't make you rage-quit. Trust me.", sub: "100% honest host" },
+    { face: 'crying', text: "Please download it... our senior developer stayed up until 3 AM polishing the physics!", sub: "Developer tears" },
+    { face: 'annoyed', text: "Look at that big green button. It's practically begging to be pressed.", sub: "Just click it" },
+    { face: 'smug', text: "Host tip: If you fall into the void, remember that it's a feature, not a bug.", sub: "Game show logic" },
+    { face: 'surprised', text: "Did I mention there are two boss fights? One of them is technically my cousin.", sub: "Lore reveal" },
+    { face: 'cool', text: "Only 38 megabytes! Smaller than your average video game patch!", sub: "Lightweight rage" },
+    { face: 'wink', text: "Controllers work automatically! Plug and play, then plug and cry.", sub: "Controller support" }
+  ];
+  var suggestionIdx = 0;
+  var idleTimer = null;
+
+  function saySuggestion(item, duration) {
+    if (!item || !modFace) return;
+    setModFace(modFace, item.face);
+    var bubbleMsg = item.text + (item.sub ? '<small>' + item.sub + '</small>' : '');
+    setBubbleSmooth(bubble, bubbleMsg, true);
+    restart(bubble, 'pop');
+    restart(modBtn, 'poked');
+
+    clearTimeout(modFaceTimer);
+    modFaceTimer = setTimeout(function () {
+      setModFace(modFace, 'smug');
+    }, duration || 4500);
+  }
+
+  function scheduleIdleSuggestion() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      var scrollY = window.scrollY || window.pageYOffset;
+      // Only suggest when looking at the hero area
+      if (scrollY < 750) {
+        var item = modSuggestions[suggestionIdx % modSuggestions.length];
+        suggestionIdx++;
+        saySuggestion(item, 5000);
+      }
+      scheduleIdleSuggestion();
+    }, 11000 + Math.random() * 4000);
+  }
+  scheduleIdleSuggestion();
 
   // ---------- the robot: blinks, hops when you reach for the download
   var robot = document.getElementById('robot');
@@ -930,8 +1291,32 @@
   robot.addEventListener('animationend', function (e) {
     if (e.animationName === 'hop') { robot.classList.remove('hop'); setTimeout(function () { robot.classList.remove('love'); }, 500); }
   });
-  dl.addEventListener('pointerenter', hop);
-  dl.addEventListener('focus', hop);
+
+  // Moderator & Robot download button interactions
+  var dlHoverLines = [
+    { face: 'wink', text: "Yes! That one! Click the big green button!", sub: "Press it!" },
+    { face: 'surprised', text: "Ooh, reaching for the download? Bold move, future champion!", sub: "Stage 1 awaits" },
+    { face: 'cool', text: "It's free, it's 38MB, and it has 100% chance of making you laugh.", sub: "Guaranteed fun" },
+    { face: 'shocked', text: "DON'T HESITATE! The big green button is waiting for you!", sub: "Free for Windows" }
+  ];
+  var dlHoverIdx = 0;
+
+  dl.addEventListener('pointerenter', function () {
+    hop();
+    clearTimeout(idleTimer);
+    var item = dlHoverLines[dlHoverIdx % dlHoverLines.length];
+    dlHoverIdx++;
+    saySuggestion(item, 4000);
+    scheduleIdleSuggestion();
+  });
+  dl.addEventListener('focus', function () {
+    hop();
+    saySuggestion(dlHoverLines[0], 4000);
+  });
+  dl.addEventListener('click', function () {
+    clearTimeout(idleTimer);
+    saySuggestion({ face: 'cool', text: "DOWNLOAD INITIATED! May your patience survive Stage 3!", sub: "Good luck, you'll need it!" }, 6000);
+  });
 
   // ---------- 3D tilt of the hero stage, following the pointer
   var scene = document.getElementById('scene'), stage = document.getElementById('stage3d');
@@ -1011,6 +1396,292 @@
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (es) { tv.style.animationPlayState = es[0].isIntersecting ? 'running' : 'paused'; }).observe(tv);
   }
+
+  // ---------- scroll-following Moderator (parallax companion)
+  if (!reduced) {
+    // create the ghost moderator (a clone of the hero one)
+    var ghost = document.createElement('div');
+    ghost.className = 'mod-ghost';
+    ghost.innerHTML = document.getElementById('mod').innerHTML;
+    document.body.appendChild(ghost);
+
+    // ghost speech bubble
+    var ghostBubble = document.createElement('div');
+    ghostBubble.className = 'mod-ghost-bubble';
+    document.body.appendChild(ghostBubble);
+
+    var bubbleTimer = null;
+    var ghostFaceEl = ghost.querySelector('.mod-face');
+    var ghostFaceTimer = null;
+    var ghostSuggestionIdx = 0;
+    var ghostCustomMessage = false;
+    var ghostCustomTimer = null;
+    var ghostIdleTimer = null;
+
+    var ghostSuggestions = [
+      { face: 'smug', text: "Host tip: Spikes in Stage 2 have trust issues.", sub: "Stage 2 warning" },
+      { face: 'wink', text: "The download is free, you know. Press the green button up top!", sub: "Pro tip" },
+      { face: 'shocked', text: "Wait, did you check the fake floor in Stage 3? Total classic.", sub: "Stage 3 spoiler" },
+      { face: 'sideEye', text: "Still scrolling? The actual game has 12 whole troll stages!", sub: "Gameplay alert" },
+      { face: 'cool', text: "Stage 12 is totally fair and definitely won't make you rage. Trust me.", sub: "100% honest host" },
+      { face: 'crying', text: "Our senior developer stayed up until 3 AM polishing the physics!", sub: "Developer tears" },
+      { face: 'surprised', text: "Two boss fights await: The Algorithm and MOD.EXE!", sub: "Boss warning" },
+      { face: 'wink', text: "Controllers work automatically! Plug and play, then plug and cry.", sub: "Controller support" },
+      { face: 'cool', text: "Only 38 megabytes! Smaller than your average video game patch!", sub: "Lightweight rage" },
+      { face: 'annoyed', text: "The big green download button is up there!", sub: "Don't get lost" }
+    ];
+
+    function setGhostSuggestion(item) {
+      if (!item || !ghostFaceEl) return;
+      setModFace(ghostFaceEl, item.face || 'smug');
+      var msg = item.text + (item.sub ? '<small>' + item.sub + '</small>' : '');
+      setBubbleSmooth(ghostBubble, msg, true);
+    }
+
+    function scheduleGhostIdle() {
+      clearTimeout(ghostIdleTimer);
+      ghostIdleTimer = setTimeout(function () {
+        if (ghostVisible && !ghostCustomMessage && !isFastScrolling) {
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }
+        scheduleGhostIdle();
+      }, 9000 + Math.random() * 3000);
+    }
+    scheduleGhostIdle();
+
+    // trail particles pool
+    var trailPool = [];
+    var trailIdx = 0;
+    var TRAIL_COUNT = 12;
+    var trailColors = ['#FF7EB6', '#FFD23F', '#3DDCFF', '#9BE564', '#FF8C42', '#9B5DE5'];
+    for (var ti = 0; ti < TRAIL_COUNT; ti++) {
+      var dot = document.createElement('div');
+      dot.className = 'mod-trail';
+      dot.style.background = trailColors[ti % trailColors.length];
+      document.body.appendChild(dot);
+      trailPool.push(dot);
+    }
+    var trailThrottle = 0;
+
+    function spawnTrail(x, y) {
+      var now = performance.now();
+      if (now - trailThrottle < 60) return;
+      trailThrottle = now;
+      var d = trailPool[trailIdx % TRAIL_COUNT];
+      trailIdx++;
+      d.style.left = x + 'px';
+      d.style.top = y + 'px';
+      if (d.animate) {
+        d.animate([
+          { opacity: .7, transform: 'scale(1) translate(0, 0)' },
+          { opacity: 0, transform: 'scale(.2) translate(' + ((Math.random() - .5) * 50) + 'px, ' + (20 + Math.random() * 30) + 'px)' }
+        ], { duration: 600 + Math.random() * 400, easing: 'ease-out', fill: 'forwards' });
+      }
+    }
+
+    // The hero area threshold — ghost appears after scrolling past hero
+    var heroEl = document.querySelector('.hero');
+    var prevGhostX = 0, prevGhostY = 0;
+    var ghostTargetX = 0, ghostTargetY = 0, ghostCurrentX = 0, ghostCurrentY = 0;
+    var ghostRot = 0, ghostRotTarget = 0, ghostRotCurrent = 0;
+    var ghostVisible = false;
+    var scrollY = window.scrollY || window.pageYOffset;
+    var smoothScrollY = scrollY;
+    var ghostRunning = false;
+
+    function updateGhost() {
+      var sy = smoothScrollY;
+      var heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
+      var footerTop = document.querySelector('footer').offsetTop;
+      var viewH = window.innerHeight;
+      var viewW = window.innerWidth;
+
+      // only show after hero
+      var shouldShow = sy > heroBottom - viewH * 0.4 && sy < footerTop - viewH * 0.2;
+
+      if (shouldShow && !ghostVisible) {
+        ghost.classList.add('visible');
+        ghostVisible = true;
+        if (!ghostCustomMessage) {
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }
+      } else if (!shouldShow && ghostVisible) {
+        ghost.classList.remove('visible');
+        ghostBubble.classList.remove('visible');
+        ghostVisible = false;
+      }
+
+      if (!ghostVisible) return;
+
+      // wild sine-wave across the viewport
+      var scrollRange = footerTop - heroBottom;
+      var progress = Math.max(0, Math.min(1, (sy - (heroBottom - viewH * 0.5)) / scrollRange));
+
+      // Multiple overlapping sine waves for chaotic movement
+      var wave1 = Math.sin(progress * Math.PI * 6) * 0.38;
+      var wave2 = Math.sin(progress * Math.PI * 2.7 + 1.2) * 0.15;
+      var wave3 = Math.cos(progress * Math.PI * 4.3 + 0.7) * 0.08;
+      var combinedWave = wave1 + wave2 + wave3;
+
+      var gw = ghost.offsetWidth || (viewW <= 560 ? 95 : 120);
+      var padding = 20;
+
+      ghostTargetX = (viewW / 2) + combinedWave * (viewW / 2 - gw / 2 - padding) - gw / 2;
+
+      var yWave = Math.sin(progress * Math.PI * 8) * 30 + Math.cos(progress * Math.PI * 3.5) * 15;
+      ghostTargetY = viewH * 0.35 + yWave;
+
+      ghostRotTarget = combinedWave * 25;
+
+      ghostCurrentX += (ghostTargetX - ghostCurrentX) * 0.07;
+      ghostCurrentY += (ghostTargetY - ghostCurrentY) * 0.07;
+      ghostRotCurrent += (ghostRotTarget - ghostRotCurrent) * 0.06;
+
+      var bob = Math.sin(performance.now() / 500) * 6;
+
+      ghost.style.left = ghostCurrentX.toFixed(1) + 'px';
+      ghost.style.top = (ghostCurrentY + bob).toFixed(1) + 'px';
+      ghost.style.transform = 'rotate(' + ghostRotCurrent.toFixed(1) + 'deg)';
+
+      // Position the bubble relative to ghost (strictly clamped and visible on all screens)
+      var bw = ghostBubble.offsetWidth || (viewW <= 560 ? 190 : 220);
+      var bh = ghostBubble.offsetHeight || 42;
+      var bubbleX, bubbleY;
+
+      if (viewW <= 560) {
+        var isRightSide = ghostCurrentX > (viewW - gw) / 2;
+        if (isRightSide) {
+          bubbleX = ghostCurrentX - bw - 8;
+          ghostBubble.classList.remove('flip');
+        } else {
+          bubbleX = ghostCurrentX + gw + 8;
+          ghostBubble.classList.add('flip');
+        }
+        bubbleX = Math.max(10, Math.min(viewW - bw - 10, bubbleX));
+        bubbleY = Math.max(55, Math.min(viewH - bh - 20, ghostCurrentY + bob - 8));
+      } else {
+        var isLeft = ghostCurrentX < viewW / 2;
+        bubbleX = isLeft ? ghostCurrentX + gw + 10 : ghostCurrentX - bw - 10;
+        bubbleX = Math.max(12, Math.min(viewW - bw - 12, bubbleX));
+        bubbleY = Math.max(20, Math.min(viewH - bh - 20, ghostCurrentY + bob + 8));
+        if (isLeft) ghostBubble.classList.add('flip');
+        else ghostBubble.classList.remove('flip');
+      }
+
+      ghostBubble.style.left = bubbleX.toFixed(1) + 'px';
+      ghostBubble.style.top = bubbleY.toFixed(1) + 'px';
+
+      spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
+    }
+
+    // Fast-scroll visual motion sickness tracking & reaction
+    var lastRealScroll = window.scrollY || window.pageYOffset;
+    var lastScrollTime = performance.now();
+    var isFastScrolling = false;
+    var recoverTimeout = null;
+
+    function ghostLoop() {
+      var realScroll = window.scrollY || window.pageYOffset;
+      var now = performance.now();
+      var dt = Math.max(1, now - lastScrollTime);
+      var deltaY = realScroll - lastRealScroll;
+      var speed = Math.abs(deltaY) / (dt / 16.67);
+
+      lastRealScroll = realScroll;
+      lastScrollTime = now;
+
+      smoothScrollY += (realScroll - smoothScrollY) * 0.1;
+
+      // FAST SCROLL MOTION SICKNESS (queasy face, rotor hyper-spin, vomit message)
+      if (speed > 32) {
+        if (!isFastScrolling) {
+          isFastScrolling = true;
+          ghost.classList.add('fast-spin', 'queasy');
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'queasy');
+          ghostCustomMessage = true;
+          setBubbleSmooth(ghostBubble, "Slow down! I'm going to vomit! <small>Internal gyroscope overloaded!</small>", true);
+        }
+
+        var gw = ghost.offsetWidth || 120;
+        var bob = Math.sin(now / 500) * 6;
+        spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
+
+        clearTimeout(recoverTimeout);
+      } else if (isFastScrolling && speed < 12) {
+        // Slowed down from fast scroll
+        isFastScrolling = false;
+        ghost.classList.remove('fast-spin', 'queasy');
+
+        clearTimeout(recoverTimeout);
+        recoverTimeout = setTimeout(function () {
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
+          ghostCustomMessage = false;
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }, 2200);
+      }
+
+      updateGhost();
+      requestAnimationFrame(ghostLoop);
+    }
+    requestAnimationFrame(ghostLoop);
+
+    // Click on ghost moderator (humorous poke reactions)
+    var ghostPokes = 0;
+    var ghostPokeReactions = [
+      { face: 'surprised', text: "HEY! I'm flying here! You want me to crash?!" },
+      { face: 'queasy', text: "Slow down! I'm getting motion sick! Somebody grab a barf bag!" },
+      { face: 'angry', text: "Don't tap the glass! It startles the rotor blades!" },
+      { face: 'wink', text: "Scrolling AND poking? That is elite multi-tasking." },
+      { face: 'dizzy', text: "Wheee! Mid-air turbulence detected!" },
+      { face: 'sideEye', text: "Still watching you. The download is up top, by the way." },
+      { face: 'cool', text: "Hovering gracefully. Your pokes can't ground me." },
+      { face: 'shocked', text: "Mayday! Host under aerial finger assault!" },
+      { face: 'crying', text: "I have to fly AND get poked? Where is OSHA?!" },
+      { face: 'sideEye', text: "Still scrolling? Bold." },
+      { face: 'smug', text: "I see everything from up here!" },
+      { face: 'annoyed', text: "You missed the download button." },
+      { face: 'cool', text: "This is MY website, you know." },
+      { face: 'shocked', text: "Are you reading all of this?!" },
+      { face: 'smug', text: "I should charge rent for this sidebar." },
+      { face: 'annoyed', text: "The game is up there!" },
+      { face: 'queasy', text: "Ugh... my internal fans are working overtime... *pant*" },
+      { face: 'crying', text: "My therapist says I hover too much." },
+      { face: 'cool', text: "I'm contractually obligated to follow you." }
+    ];
+
+    ghost.addEventListener('click', function () {
+      ghostPokes++;
+      ghostCustomMessage = true;
+      clearTimeout(recoverTimeout);
+
+      var rx = ghostPokeReactions[(ghostPokes - 1) % ghostPokeReactions.length];
+      if (ghostFaceEl) setModFace(ghostFaceEl, rx.face);
+      setBubbleSmooth(ghostBubble, rx.text + '<small>Air pokes: ' + ghostPokes + '</small>', true);
+
+      var svg = ghost.querySelector('.mod-svg');
+      if (ghostPokes % 3 === 0 && svg) {
+        restart(svg, 'roll');
+      } else {
+        restart(ghost, 'poked');
+      }
+
+      clearTimeout(ghostCustomTimer);
+      ghostCustomTimer = setTimeout(function () {
+        ghostCustomMessage = false;
+        if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
+        var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+        ghostSuggestionIdx++;
+        setGhostSuggestion(item);
+      }, 4500);
+    });
+  }
+
 })();
 </script>
 </body>
