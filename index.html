@@ -200,8 +200,27 @@
     border-radius: 20px 20px 4px 20px;
     padding: 12px 16px;
     font-size: 15px; line-height: 1.4; font-weight: 500;
-    box-shadow: 0 5px 0 rgba(0, 0, 0, .2);
-    transition: opacity .25s ease, transform .25s cubic-bezier(.2, .8, .2, 1);
+    box-shadow: 0 4px 0 rgba(43, 27, 74, .18), 0 8px 24px rgba(0, 0, 0, .2);
+    border: 2px solid rgba(255, 255, 255, .8);
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    top: 24px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 11px solid var(--paper);
+  }
+  .bubble.changing, .mod-ghost-bubble.changing {
+    opacity: 0 !important;
+    transform: scale(0.92) translateY(4px) !important;
+    transition: opacity .12s ease-in, transform .12s ease-in;
   }
   .bubble small { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-soft); font-weight: 400; }
 
@@ -529,35 +548,78 @@
 
   /* ------------------------------------------------------------------ responsive */
   @media (max-width: 900px) {
-    .hero-grid, .show, .verify, .two { grid-template-columns: 1fr; }
-    .scene { height: 460px; max-width: 520px; width: 100%; margin: 0 auto 30px; }
-    .get { margin-bottom: 34px; }
+    .hero-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 20px;
+    }
+    .hero-content {
+      display: contents;
+    }
+    .hero-title-group {
+      order: 1;
+    }
+    .scene {
+      order: 2;
+      height: 340px;
+      max-width: 500px;
+      width: 100%;
+      margin: 6px auto 16px;
+    }
+    .lede {
+      order: 3;
+      text-align: center;
+      margin: 0 auto 16px;
+      max-width: 38em;
+    }
+    .get {
+      order: 4;
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+    .show, .verify, .two { grid-template-columns: 1fr; }
     .credits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 560px) {
     body { font-size: 16px; }
     .topbar nav { display: none; }
-    .scene { height: 430px; }
+    .scene { height: 310px; }
     .bubble {
       position: absolute;
-      left: 12px;
-      right: 12px;
-      top: 6px;
+      left: 8px;
+      right: 106px;
+      top: 10px;
       width: auto;
-      max-width: calc(100% - 24px);
+      max-width: calc(100% - 114px);
       z-index: 35;
-      font-size: 14px;
-      padding: 10px 14px;
-      border-radius: 18px;
-      text-align: center;
-      translate: 0 0 200px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+      font-size: 13px;
+      line-height: 1.35;
+      padding: 10px 13px;
+      border-radius: 16px 16px 4px 16px;
+      text-align: left;
+      translate: 0 0 150px;
+      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .25);
+      border: 2px solid #fff;
     }
-    .bubble small { text-align: center; }
-    .mod { right: 8px; top: 82px; width: 110px; z-index: 20; }
-    .platform { height: 120px; }
-    .platform .top { height: 70px; }
-    .robot { bottom: 58px; width: 54%; }
+    .bubble::after {
+      content: "";
+      position: absolute;
+      right: -9px;
+      top: 18px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 10px solid var(--paper);
+    }
+    .bubble small { text-align: left; font-size: 11px; margin-top: 3px; }
+    .mod { right: 6px; top: 10px; width: 92px; z-index: 25; }
+    .platform { height: 95px; }
+    .platform .top { height: 58px; }
+    .robot { bottom: 32px; width: 44%; max-width: 160px; }
     .board { grid-template-columns: repeat(2, 1fr); }
     .btn { width: 100%; justify-content: center; }
     #credits { text-align: center; }
@@ -572,12 +634,14 @@
     .mod-ghost { width: 95px; }
     .mod-ghost-bubble {
       white-space: normal;
-      max-width: min(220px, 72vw);
+      max-width: 210px;
       font-size: 12px;
-      padding: 8px 12px;
+      padding: 7px 11px;
       z-index: 60;
-      text-align: center;
-      border-radius: 14px;
+      text-align: left;
+      border-radius: 14px 14px 4px 14px;
+      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .28);
+      border: 2px solid #fff;
     }
     .tv { padding: 10px; border-radius: 22px; }
     .tv-play { width: 80px; height: 80px; }
@@ -614,7 +678,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 41;
+    z-index: 55;
     background: var(--paper);
     color: var(--ink);
     border-radius: 16px 16px 4px 16px;
@@ -622,15 +686,23 @@
     font-size: 13px;
     line-height: 1.35;
     font-weight: 500;
-    box-shadow: 0 4px 16px rgba(36, 16, 71, .25);
+    box-shadow: 0 4px 0 rgba(43, 27, 74, .2), 0 8px 24px rgba(36, 16, 71, .3);
+    border: 2px solid rgba(255, 255, 255, .85);
     opacity: 0;
     pointer-events: none;
-    white-space: nowrap;
-    transition: opacity .25s ease, transform .25s cubic-bezier(.2, .8, .2, 1);
+    white-space: normal;
+    max-width: 260px;
+    transform: scale(0.92) translateY(4px);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1);
     will-change: left, top, opacity, transform;
   }
-  .mod-ghost-bubble.visible { opacity: 1; }
+  .mod-ghost-bubble.visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+  }
   .mod-ghost-bubble.flip { border-radius: 16px 16px 16px 4px; }
+  .mod-ghost-bubble small { display: block; margin-top: 3px; font-size: 11px; color: var(--ink-soft); font-weight: 400; }
 
   /* trail particles */
   .mod-trail {
@@ -670,12 +742,14 @@
     </div>
 
     <div class="hero-grid" id="top">
-      <div>
-        <h1 class="title" aria-label="Out of Context">
-          <span class="line" aria-hidden="true" id="t1"></span>
-          <span class="line" aria-hidden="true" id="t2"></span>
-        </h1>
-        <span class="tag">Welcome to Peak Nonsense</span>
+      <div class="hero-content">
+        <div class="hero-title-group">
+          <h1 class="title" aria-label="Out of Context">
+            <span class="line" aria-hidden="true" id="t1"></span>
+            <span class="line" aria-hidden="true" id="t2"></span>
+          </h1>
+          <span class="tag">Welcome to Peak Nonsense</span>
+        </div>
         <p class="lede">A single-player 3D rage platformer dressed up as a game show. Fake floors, fake save points, two bosses and a host who roasts every single fall. Free for Windows.</p>
 
         <div class="get" id="download">
@@ -700,7 +774,7 @@
 
       <div class="scene" id="scene">
        <div class="stage3d" id="stage3d">
-        <div class="bubble" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
+        <div class="bubble visible" id="bubble" aria-live="polite">Oh! A visitor! Welcome to OUT OF CONTEXT. Press the big green button. I've been practising my intro for a while.<small>Poke me. I dare you.</small></div>
         <button class="mod" id="mod" type="button" aria-label="Poke the Moderator">
           <svg class="mod-svg" id="mod-svg" viewBox="0 0 160 150" aria-hidden="true">
             <rect x="77" y="22" width="6" height="18" rx="2" fill="#15161C"/>
@@ -1076,39 +1150,30 @@
   // Smooth speech bubble message transition
   function setBubbleSmooth(bubbleEl, textOrHtml, isHtml) {
     if (!bubbleEl) return;
-    if (reduced || !bubbleEl.animate) {
+    if (reduced) {
       if (isHtml) bubbleEl.innerHTML = textOrHtml;
       else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
       bubbleEl.classList.add('visible');
       return;
     }
-    var isVis = bubbleEl.classList.contains('visible') || (window.getComputedStyle(bubbleEl).opacity !== '0' && window.getComputedStyle(bubbleEl).display !== 'none');
-    if (!isVis) {
+    if (!bubbleEl.classList.contains('visible') || window.getComputedStyle(bubbleEl).opacity === '0') {
       if (isHtml) bubbleEl.innerHTML = textOrHtml;
       else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
       bubbleEl.classList.add('visible');
-      bubbleEl.animate([
-        { opacity: 0, transform: 'scale(0.88) translateY(6px)' },
-        { opacity: 1, transform: 'scale(1) translateY(0)' }
-      ], { duration: 240, easing: 'cubic-bezier(.2, 1.4, .4, 1)', fill: 'forwards' });
       return;
     }
 
-    var exit = bubbleEl.animate([
-      { opacity: 1, transform: 'scale(1) translateY(0)' },
-      { opacity: 0, transform: 'scale(0.94) translateY(-3px)' }
-    ], { duration: 120, easing: 'ease-in' });
-
-    exit.onfinish = function () {
+    bubbleEl.classList.add('changing');
+    setTimeout(function () {
       if (isHtml) bubbleEl.innerHTML = textOrHtml;
       else bubbleEl.textContent = textOrHtml;
+      bubbleEl.classList.remove('changing');
       bubbleEl.classList.add('visible');
-      bubbleEl.animate([
-        { opacity: 0, transform: 'scale(0.94) translateY(4px)' },
-        { opacity: 1, transform: 'scale(1) translateY(0)' }
-      ], { duration: 220, easing: 'cubic-bezier(.2, 1.4, .4, 1)', fill: 'forwards' });
-    };
+    }, 130);
   }
+
 
   var pokeReactions = [
     { face: 'surprised', text: 'HEY! Personal space is a legal concept, you know!' },
@@ -1201,13 +1266,13 @@
     idleTimer = setTimeout(function () {
       var scrollY = window.scrollY || window.pageYOffset;
       // Only suggest when looking at the hero area
-      if (scrollY < 550) {
+      if (scrollY < 750) {
         var item = modSuggestions[suggestionIdx % modSuggestions.length];
         suggestionIdx++;
         saySuggestion(item, 5000);
       }
       scheduleIdleSuggestion();
-    }, 12000 + Math.random() * 4000);
+    }, 11000 + Math.random() * 4000);
   }
   scheduleIdleSuggestion();
 
@@ -1348,6 +1413,43 @@
     var bubbleTimer = null;
     var ghostFaceEl = ghost.querySelector('.mod-face');
     var ghostFaceTimer = null;
+    var ghostSuggestionIdx = 0;
+    var ghostCustomMessage = false;
+    var ghostCustomTimer = null;
+    var ghostIdleTimer = null;
+
+    var ghostSuggestions = [
+      { face: 'smug', text: "Host tip: Spikes in Stage 2 have trust issues.", sub: "Stage 2 warning" },
+      { face: 'wink', text: "The download is free, you know. Press the green button up top!", sub: "Pro tip" },
+      { face: 'shocked', text: "Wait, did you check the fake floor in Stage 3? Total classic.", sub: "Stage 3 spoiler" },
+      { face: 'sideEye', text: "Still scrolling? The actual game has 12 whole troll stages!", sub: "Gameplay alert" },
+      { face: 'cool', text: "Stage 12 is totally fair and definitely won't make you rage. Trust me.", sub: "100% honest host" },
+      { face: 'crying', text: "Our senior developer stayed up until 3 AM polishing the physics!", sub: "Developer tears" },
+      { face: 'surprised', text: "Two boss fights await: The Algorithm and MOD.EXE!", sub: "Boss warning" },
+      { face: 'wink', text: "Controllers work automatically! Plug and play, then plug and cry.", sub: "Controller support" },
+      { face: 'cool', text: "Only 38 megabytes! Smaller than your average video game patch!", sub: "Lightweight rage" },
+      { face: 'annoyed', text: "The big green download button is UP there! ↑", sub: "Don't get lost" }
+    ];
+
+    function setGhostSuggestion(item) {
+      if (!item || !ghostFaceEl) return;
+      setModFace(ghostFaceEl, item.face || 'smug');
+      var msg = item.text + (item.sub ? '<small>' + item.sub + '</small>' : '');
+      setBubbleSmooth(ghostBubble, msg, true);
+    }
+
+    function scheduleGhostIdle() {
+      clearTimeout(ghostIdleTimer);
+      ghostIdleTimer = setTimeout(function () {
+        if (ghostVisible && !ghostCustomMessage && !isFastScrolling) {
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }
+        scheduleGhostIdle();
+      }, 9000 + Math.random() * 3000);
+    }
+    scheduleGhostIdle();
 
     // trail particles pool
     var trailPool = [];
@@ -1397,11 +1499,16 @@
       var viewW = window.innerWidth;
 
       // only show after hero
-      var shouldShow = sy > heroBottom - viewH * 0.5 && sy < footerTop - viewH * 0.3;
+      var shouldShow = sy > heroBottom - viewH * 0.4 && sy < footerTop - viewH * 0.2;
 
       if (shouldShow && !ghostVisible) {
         ghost.classList.add('visible');
         ghostVisible = true;
+        if (!ghostCustomMessage) {
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }
       } else if (!shouldShow && ghostVisible) {
         ghost.classList.remove('visible');
         ghostBubble.classList.remove('visible');
@@ -1415,71 +1522,63 @@
       var progress = Math.max(0, Math.min(1, (sy - (heroBottom - viewH * 0.5)) / scrollRange));
 
       // Multiple overlapping sine waves for chaotic movement
-      var wave1 = Math.sin(progress * Math.PI * 6) * 0.38;    // fast primary wave
-      var wave2 = Math.sin(progress * Math.PI * 2.7 + 1.2) * 0.15; // slower secondary
-      var wave3 = Math.cos(progress * Math.PI * 4.3 + 0.7) * 0.08; // tertiary wobble
+      var wave1 = Math.sin(progress * Math.PI * 6) * 0.38;
+      var wave2 = Math.sin(progress * Math.PI * 2.7 + 1.2) * 0.15;
+      var wave3 = Math.cos(progress * Math.PI * 4.3 + 0.7) * 0.08;
       var combinedWave = wave1 + wave2 + wave3;
 
-      // Ghost width for boundary calculation
-      var gw = ghost.offsetWidth || 120;
-      var padding = 30;
+      var gw = ghost.offsetWidth || (viewW <= 560 ? 95 : 120);
+      var padding = 20;
 
-      // X position: sweep across the viewport
       ghostTargetX = (viewW / 2) + combinedWave * (viewW / 2 - gw / 2 - padding) - gw / 2;
 
-      // Y position: bob up and down with scroll, offset vertically
       var yWave = Math.sin(progress * Math.PI * 8) * 30 + Math.cos(progress * Math.PI * 3.5) * 15;
       ghostTargetY = viewH * 0.35 + yWave;
 
-      // Rotation: tilt in the direction of movement + gentle bob
-      ghostRotTarget = combinedWave * 25; // up to 25 degrees tilt
+      ghostRotTarget = combinedWave * 25;
 
-      // Lerp for smooth following
       ghostCurrentX += (ghostTargetX - ghostCurrentX) * 0.07;
       ghostCurrentY += (ghostTargetY - ghostCurrentY) * 0.07;
       ghostRotCurrent += (ghostRotTarget - ghostRotCurrent) * 0.06;
 
-      // gentle hover bob using time
       var bob = Math.sin(performance.now() / 500) * 6;
 
-      // Position via left/top (no conflict with transform)
       ghost.style.left = ghostCurrentX.toFixed(1) + 'px';
       ghost.style.top = (ghostCurrentY + bob).toFixed(1) + 'px';
       ghost.style.transform = 'rotate(' + ghostRotCurrent.toFixed(1) + 'deg)';
 
-      // Position the bubble relative to ghost (clamped and visible on mobile)
-      var bw = ghostBubble.offsetWidth || 180;
-      var bh = ghostBubble.offsetHeight || 40;
+      // Position the bubble relative to ghost (strictly clamped and visible on all screens)
+      var bw = ghostBubble.offsetWidth || (viewW <= 560 ? 190 : 220);
+      var bh = ghostBubble.offsetHeight || 42;
       var bubbleX, bubbleY;
 
       if (viewW <= 560) {
-        var centerX = ghostCurrentX + gw / 2;
-        bubbleX = Math.max(10, Math.min(viewW - bw - 10, centerX - bw / 2));
-        bubbleY = ghostCurrentY + bob - bh - 8;
-        if (bubbleY < 50) {
-          bubbleY = ghostCurrentY + bob + (ghost.offsetHeight || 100) + 8;
+        var isRightSide = ghostCurrentX > (viewW - gw) / 2;
+        if (isRightSide) {
+          bubbleX = ghostCurrentX - bw - 8;
+          ghostBubble.classList.remove('flip');
+        } else {
+          bubbleX = ghostCurrentX + gw + 8;
+          ghostBubble.classList.add('flip');
         }
+        bubbleX = Math.max(10, Math.min(viewW - bw - 10, bubbleX));
+        bubbleY = Math.max(55, Math.min(viewH - bh - 20, ghostCurrentY + bob - 8));
       } else {
         var isLeft = ghostCurrentX < viewW / 2;
         bubbleX = isLeft ? ghostCurrentX + gw + 10 : ghostCurrentX - bw - 10;
         bubbleX = Math.max(12, Math.min(viewW - bw - 12, bubbleX));
-        bubbleY = ghostCurrentY + bob + 10;
-        if (isLeft) {
-          ghostBubble.classList.add('flip');
-        } else {
-          ghostBubble.classList.remove('flip');
-        }
+        bubbleY = Math.max(20, Math.min(viewH - bh - 20, ghostCurrentY + bob + 8));
+        if (isLeft) ghostBubble.classList.add('flip');
+        else ghostBubble.classList.remove('flip');
       }
 
       ghostBubble.style.left = bubbleX.toFixed(1) + 'px';
       ghostBubble.style.top = bubbleY.toFixed(1) + 'px';
 
-      // spawn trail particles
       spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
-
     }
 
-    // Fast-scroll visual motion sickness tracking (does NOT change message text)
+    // Fast-scroll visual motion sickness tracking & reaction
     var lastRealScroll = window.scrollY || window.pageYOffset;
     var lastScrollTime = performance.now();
     var isFastScrolling = false;
@@ -1490,22 +1589,23 @@
       var now = performance.now();
       var dt = Math.max(1, now - lastScrollTime);
       var deltaY = realScroll - lastRealScroll;
-      var speed = Math.abs(deltaY) / (dt / 16.67); // px per frame (at 60fps)
+      var speed = Math.abs(deltaY) / (dt / 16.67);
 
       lastRealScroll = realScroll;
       lastScrollTime = now;
 
       smoothScrollY += (realScroll - smoothScrollY) * 0.1;
 
-      // FAST SCROLL VISUAL HANDLING (rotor hyper-spin, queasy face, wobble, trails)
-      if (speed > 35) {
+      // FAST SCROLL MOTION SICKNESS (queasy face, rotor hyper-spin, vomit message)
+      if (speed > 32) {
         if (!isFastScrolling) {
           isFastScrolling = true;
           ghost.classList.add('fast-spin', 'queasy');
           if (ghostFaceEl) setModFace(ghostFaceEl, 'queasy');
+          ghostCustomMessage = true;
+          setBubbleSmooth(ghostBubble, "Slow down! I'm going to vomit! 🤢<small>Internal gyroscope overloaded!</small>", true);
         }
 
-        // Extra motion trails when flying fast
         var gw = ghost.offsetWidth || 120;
         var bob = Math.sin(now / 500) * 6;
         spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
@@ -1519,7 +1619,11 @@
         clearTimeout(recoverTimeout);
         recoverTimeout = setTimeout(function () {
           if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-        }, 1500);
+          ghostCustomMessage = false;
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }, 2200);
       }
 
       updateGhost();
@@ -1527,7 +1631,7 @@
     }
     requestAnimationFrame(ghostLoop);
 
-    // click on ghost moderator (messages only change when poked)
+    // Click on ghost moderator (humorous poke reactions)
     var ghostPokes = 0;
     var ghostPokeReactions = [
       { face: 'surprised', text: "HEY! I'm flying here! You want me to crash?!" },
@@ -1553,14 +1657,12 @@
 
     ghost.addEventListener('click', function () {
       ghostPokes++;
+      ghostCustomMessage = true;
+      clearTimeout(recoverTimeout);
+
       var rx = ghostPokeReactions[(ghostPokes - 1) % ghostPokeReactions.length];
       if (ghostFaceEl) setModFace(ghostFaceEl, rx.face);
-      setBubbleSmooth(ghostBubble, rx.text);
-      clearTimeout(bubbleTimer);
-      bubbleTimer = setTimeout(function () {
-        ghostBubble.classList.remove('visible');
-        if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-      }, 3200);
+      setBubbleSmooth(ghostBubble, rx.text + '<small>Air pokes: ' + ghostPokes + '</small>', true);
 
       var svg = ghost.querySelector('.mod-svg');
       if (ghostPokes % 3 === 0 && svg) {
@@ -1569,10 +1671,14 @@
         restart(ghost, 'poked');
       }
 
-      clearTimeout(ghostFaceTimer);
-      ghostFaceTimer = setTimeout(function () {
+      clearTimeout(ghostCustomTimer);
+      ghostCustomTimer = setTimeout(function () {
+        ghostCustomMessage = false;
         if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-      }, 3500);
+        var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+        ghostSuggestionIdx++;
+        setGhostSuggestion(item);
+      }, 4500);
     });
   }
 
