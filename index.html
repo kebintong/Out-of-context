@@ -555,7 +555,8 @@
   }
   .tv.pip .onair {
     top: -10px;
-    right: 18px;
+    left: 14px;
+    right: auto;
     font-size: 11px;
     padding: 2px 10px;
   }
@@ -585,26 +586,34 @@
   .tv-pip-close {
     position: absolute;
     top: -10px;
-    left: 14px;
-    width: 26px;
-    height: 26px;
+    right: 12px;
+    left: auto;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: #ff2f4f;
+    background: #ff2a55;
     color: #fff;
     border: 2px solid #fff;
     display: none;
     place-items: center;
     cursor: pointer;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, .4);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .45);
     z-index: 10;
-    transition: transform .12s ease;
+    transition: transform .12s ease, background .12s ease;
+    padding: 0;
   }
   .tv-pip-close:hover {
     transform: scale(1.15);
+    background: #ff0d39;
+  }
+  .tv-pip-close:active {
+    transform: scale(0.92);
   }
   .tv-pip-close svg {
     width: 14px;
     height: 14px;
+    display: block;
+    pointer-events: none;
   }
   .tv.pip .tv-pip-close {
     display: grid !important;
@@ -617,6 +626,22 @@
       width: min(230px, 68vw) !important;
       padding: 8px !important;
       border-radius: 16px !important;
+    }
+    .tv.pip .onair {
+      left: 10px;
+      top: -9px;
+      font-size: 10px;
+      padding: 2px 8px;
+    }
+    .tv.pip .tv-pip-close {
+      right: 10px;
+      top: -9px;
+      width: 26px;
+      height: 26px;
+    }
+    .tv.pip .tv-pip-close svg {
+      width: 13px;
+      height: 13px;
     }
     .tv.pip .tv-bar input[type=range] {
       min-width: 40px;
@@ -732,42 +757,42 @@
     .scene { height: 310px; }
     .bubble {
       position: absolute;
-      left: 8px;
-      right: 106px;
+      left: auto;
+      right: 104px;
       top: 10px;
       width: auto;
-      max-width: calc(100% - 114px);
+      max-width: min(195px, calc(100% - 110px));
       z-index: 35;
-      font-size: 13px;
-      line-height: 1.35;
-      padding: 10px 13px;
-      border-radius: 16px 16px 4px 16px;
+      font-size: 11.5px;
+      line-height: 1.32;
+      padding: 7px 11px;
+      border-radius: 14px 14px 4px 14px;
       text-align: left;
       translate: 0 0 150px;
-      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .25);
+      box-shadow: 0 3px 0 rgba(43, 27, 74, .25), 0 6px 16px rgba(0, 0, 0, .22);
       border: 2px solid #fff;
     }
     .bubble::after {
       content: "";
       position: absolute;
-      right: -9px;
-      top: 18px;
+      right: -8px;
+      top: 14px;
       width: 0;
       height: 0;
-      border-top: 6px solid transparent;
-      border-bottom: 6px solid transparent;
-      border-left: 10px solid var(--paper);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 9px solid var(--paper);
     }
     .bubble.flip {
-      border-radius: 16px 16px 16px 4px;
+      border-radius: 14px 14px 14px 4px;
     }
     .bubble.flip::after {
       right: auto;
-      left: -9px;
+      left: -8px;
       border-left: none;
-      border-right: 10px solid var(--paper);
+      border-right: 9px solid var(--paper);
     }
-    .bubble small { text-align: left; font-size: 11px; margin-top: 3px; }
+    .bubble small { text-align: left; font-size: 10px; margin-top: 2px; }
     .mod { right: 6px; top: 10px; width: 92px; z-index: 25; }
     .platform {
       height: 84px;
@@ -799,15 +824,17 @@
     .mod-ghost { width: 95px; }
     .mod-ghost-bubble {
       white-space: normal;
-      max-width: 210px;
-      font-size: 12px;
-      padding: 7px 11px;
+      max-width: 175px;
+      font-size: 11px;
+      line-height: 1.28;
+      padding: 6px 10px;
       z-index: 60;
       text-align: left;
-      border-radius: 14px 14px 4px 14px;
-      box-shadow: 0 4px 0 rgba(43, 27, 74, .25), 0 8px 20px rgba(0, 0, 0, .28);
+      border-radius: 12px 12px 3px 12px;
+      box-shadow: 0 3px 0 rgba(43, 27, 74, .25), 0 6px 16px rgba(0, 0, 0, .24);
       border: 2px solid #fff;
     }
+    .mod-ghost-bubble small { font-size: 9.5px; margin-top: 2px; }
     .tv { padding: 10px; border-radius: 22px; }
     .tv-play { width: 80px; height: 80px; }
     .tv-play svg { width: 36px; height: 36px; }
@@ -1038,8 +1065,11 @@
               <button type="button" id="tv-full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </div>
-          <button type="button" class="tv-pip-close" id="tv-pip-close" aria-label="Close Picture in Picture">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          <button type="button" class="tv-pip-close" id="tv-pip-close" aria-label="Close Picture in Picture" title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
           <span class="onair" id="onair" aria-hidden="true">On air</span>
         </div>
@@ -1482,10 +1512,10 @@
       // Mod is on right half -> bubble sits to the left of mod
       bubble.classList.remove('flip');
       if (isMobile) {
-        bubble.style.left = '8px';
+        bubble.style.left = 'auto';
         bubble.style.right = (stageW - modLeft + 8) + 'px';
-        bubble.style.top = Math.max(10, Math.min(stageH - 75, modTop - 4)) + 'px';
-        bubble.style.maxWidth = Math.max(120, modLeft - 14) + 'px';
+        bubble.style.top = Math.max(8, Math.min(stageH - 70, modTop - 2)) + 'px';
+        bubble.style.maxWidth = Math.min(195, Math.max(110, modLeft - 12)) + 'px';
       } else {
         bubble.style.left = 'auto';
         bubble.style.right = (stageW - modLeft + 14) + 'px';
@@ -1496,10 +1526,10 @@
       // Mod is on left half -> bubble sits to the right of mod
       bubble.classList.add('flip');
       if (isMobile) {
+        bubble.style.right = 'auto';
         bubble.style.left = (modLeft + modW + 8) + 'px';
-        bubble.style.right = '8px';
-        bubble.style.top = Math.max(10, Math.min(stageH - 75, modTop - 4)) + 'px';
-        bubble.style.maxWidth = Math.max(120, stageW - (modLeft + modW) - 14) + 'px';
+        bubble.style.top = Math.max(8, Math.min(stageH - 70, modTop - 2)) + 'px';
+        bubble.style.maxWidth = Math.min(195, Math.max(110, stageW - (modLeft + modW) - 12)) + 'px';
       } else {
         bubble.style.right = 'auto';
         bubble.style.left = (modLeft + modW + 14) + 'px';
@@ -2136,8 +2166,8 @@
       ghost.style.transform = 'rotate(' + ghostRotCurrent.toFixed(1) + 'deg)';
 
       // Position the bubble relative to ghost (strictly clamped and visible on all screens)
-      var bw = ghostBubble.offsetWidth || (viewW <= 560 ? 190 : 220);
-      var bh = ghostBubble.offsetHeight || 42;
+      var bw = ghostBubble.offsetWidth || (viewW <= 560 ? 170 : 220);
+      var bh = ghostBubble.offsetHeight || 38;
       var bubbleX, bubbleY;
 
       if (viewW <= 560) {
@@ -2150,7 +2180,7 @@
           ghostBubble.classList.add('flip');
         }
         bubbleX = Math.max(10, Math.min(viewW - bw - 10, bubbleX));
-        bubbleY = Math.max(55, Math.min(viewH - bh - 20, ghostCurrentY + bob - 8));
+        bubbleY = Math.max(50, Math.min(viewH - bh - 16, ghostCurrentY + bob - 6));
       } else {
         var isLeft = ghostCurrentX < viewW / 2;
         bubbleX = isLeft ? ghostCurrentX + gw + 10 : ghostCurrentX - bw - 10;
