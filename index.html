@@ -1747,21 +1747,44 @@
   function clock(t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + t % 60).slice(-2); }
   function showVideo() {
     soon.hidden = true; video.hidden = false; bigPlay.hidden = false; bar.hidden = false;
-    video.preload = 'metadata'; video.load();
-    fetch('trailer/poster.jpg', { method: 'HEAD' }).then(function (r) {
-      if (r.ok && /image/.test(r.headers.get('content-type') || '')) video.poster = 'trailer/poster.jpg';
-    }).catch(function () {});
+    video.poster = 'trailer/poster.jpg';
+    video.preload = 'metadata';
   }
-  fetch('trailer/trailer.mp4', { method: 'HEAD' }).then(function (r) {
-    if (r.ok && !/text\/html/.test(r.headers.get('content-type') || '')) showVideo();
-  }).catch(function () {});
+  showVideo();
+  video.addEventListener('error', function () {
+    soon.hidden = false; video.hidden = true; bigPlay.hidden = true; bar.hidden = true;
+  });
+  var wasAutoPaused = false;
+  var isAutoPausing = false;
+  var userStartedVideo = false;
+
   function toggle() { if (video.paused) video.play(); else video.pause(); }
   bigPlay.addEventListener('click', toggle);
   video.addEventListener('click', toggle);
   var tBtn = document.getElementById('tv-toggle'); tBtn.addEventListener('click', toggle);
-  video.addEventListener('play', function () { tv.classList.add('playing'); bigPlay.hidden = true; tIcon.setAttribute('d', PAUSE); tBtn.setAttribute('aria-label', 'Pause'); idle(); });
-  video.addEventListener('pause', function () { tv.classList.remove('playing'); bigPlay.hidden = false; tIcon.setAttribute('d', PLAY); tBtn.setAttribute('aria-label', 'Play'); bar.classList.remove('idle'); });
-  video.addEventListener('ended', function () { video.currentTime = 0; });
+  video.addEventListener('play', function () {
+    userStartedVideo = true;
+    tv.classList.add('playing');
+    bigPlay.hidden = true;
+    tIcon.setAttribute('d', PAUSE);
+    tBtn.setAttribute('aria-label', 'Pause');
+    idle();
+  });
+  video.addEventListener('pause', function () {
+    if (!isAutoPausing) {
+      wasAutoPaused = false; // User manually paused it
+    }
+    tv.classList.remove('playing');
+    bigPlay.hidden = false;
+    tIcon.setAttribute('d', PLAY);
+    tBtn.setAttribute('aria-label', 'Play');
+    bar.classList.remove('idle');
+  });
+  video.addEventListener('ended', function () {
+    video.currentTime = 0;
+    wasAutoPaused = false;
+    userStartedVideo = false;
+  });
   video.addEventListener('timeupdate', function () {
     if (video.duration) seek.value = Math.round(video.currentTime / video.duration * 1000);
     time.textContent = clock(video.currentTime) + ' / ' + clock(video.duration);
@@ -1785,9 +1808,36 @@
   }
   tv.addEventListener('pointermove', idle);
   bar.addEventListener('focusin', idle);
-  // the marquee bulbs only run while you can see them
+
+  // Auto-pause when scrolling away from trailer, and auto-resume when scrolling back in view
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(function (es) { tv.style.animationPlayState = es[0].isIntersecting ? 'running' : 'paused'; }).observe(tv);
+    var tvObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        tv.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
+
+        if (!userStartedVideo) return;
+
+        // Scrolled away / out of view
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.2) {
+          if (!video.paused) {
+            isAutoPausing = true;
+            wasAutoPaused = true;
+            video.pause();
+            isAutoPausing = false;
+          }
+        } else if (entry.intersectionRatio >= 0.25) {
+          // Scrolled back into view
+          if (wasAutoPaused && video.paused) {
+            wasAutoPaused = false;
+            var p = video.play();
+            if (p && p.catch) p.catch(function () {});
+          }
+        }
+      });
+    }, {
+      threshold: [0, 0.2, 0.25, 0.5]
+    });
+    tvObserver.observe(tv);
   }
 
   // ---------- scroll-following Moderator (parallax companion)
