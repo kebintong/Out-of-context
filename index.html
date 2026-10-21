@@ -603,6 +603,10 @@
       width: 100%;
       margin: 6px auto 16px;
     }
+    .platform { height: 110px; }
+    .platform .top { height: 68px; }
+    .platform .side { top: 32px; border-radius: 0 0 50% 50% / 0 0 34px 34px; }
+    .robot { bottom: 38px; width: 48%; max-width: 220px; }
     .lede {
       order: 3;
       text-align: center;
@@ -662,9 +666,22 @@
     }
     .bubble small { text-align: left; font-size: 11px; margin-top: 3px; }
     .mod { right: 6px; top: 10px; width: 92px; z-index: 25; }
-    .platform { height: 95px; }
-    .platform .top { height: 58px; }
-    .robot { bottom: 32px; width: 44%; max-width: 160px; }
+    .platform {
+      height: 84px;
+      left: 6%;
+      right: 6%;
+      filter: drop-shadow(0 10px 16px rgba(15, 0, 40, .45));
+    }
+    .platform .top {
+      height: 52px;
+      background-size: 32px 32px;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .08);
+    }
+    .platform .side {
+      top: 25px;
+      border-radius: 0 0 50% 50% / 0 0 26px 26px;
+    }
+    .robot { bottom: 26px; width: 44%; max-width: 150px; }
     .board { grid-template-columns: repeat(2, 1fr); }
     .btn { width: 100%; justify-content: center; }
     #credits { text-align: center; }
