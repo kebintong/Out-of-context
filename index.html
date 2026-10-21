@@ -1315,7 +1315,7 @@
   });
   dl.addEventListener('click', function () {
     clearTimeout(idleTimer);
-    saySuggestion({ face: 'cool', text: "DOWNLOAD INITIATED! 🎮 May your patience survive Stage 3!", sub: "Good luck, you'll need it!" }, 6000);
+    saySuggestion({ face: 'cool', text: "DOWNLOAD INITIATED! May your patience survive Stage 3!", sub: "Good luck, you'll need it!" }, 6000);
   });
 
   // ---------- 3D tilt of the hero stage, following the pointer
@@ -1428,7 +1428,7 @@
       { face: 'surprised', text: "Two boss fights await: The Algorithm and MOD.EXE!", sub: "Boss warning" },
       { face: 'wink', text: "Controllers work automatically! Plug and play, then plug and cry.", sub: "Controller support" },
       { face: 'cool', text: "Only 38 megabytes! Smaller than your average video game patch!", sub: "Lightweight rage" },
-      { face: 'annoyed', text: "The big green download button is UP there! ↑", sub: "Don't get lost" }
+      { face: 'annoyed', text: "The big green download button is up there!", sub: "Don't get lost" }
     ];
 
     function setGhostSuggestion(item) {
@@ -1603,7 +1603,7 @@
           ghost.classList.add('fast-spin', 'queasy');
           if (ghostFaceEl) setModFace(ghostFaceEl, 'queasy');
           ghostCustomMessage = true;
-          setBubbleSmooth(ghostBubble, "Slow down! I'm going to vomit! 🤢<small>Internal gyroscope overloaded!</small>", true);
+          setBubbleSmooth(ghostBubble, "Slow down! I'm going to vomit! <small>Internal gyroscope overloaded!</small>", true);
         }
 
         var gw = ghost.offsetWidth || 120;
@@ -1649,7 +1649,7 @@
       { face: 'cool', text: "This is MY website, you know." },
       { face: 'shocked', text: "Are you reading all of this?!" },
       { face: 'smug', text: "I should charge rent for this sidebar." },
-      { face: 'annoyed', text: "The game is UP there ↑" },
+      { face: 'annoyed', text: "The game is up there!" },
       { face: 'queasy', text: "Ugh... my internal fans are working overtime... *pant*" },
       { face: 'crying', text: "My therapist says I hover too much." },
       { face: 'cool', text: "I'm contractually obligated to follow you." }
