@@ -1396,10 +1396,12 @@
     var modW = modBtn.offsetWidth || (window.innerWidth <= 560 ? 92 : 180);
     var modH = modBtn.offsetHeight || modW;
 
+    var isMobile = window.innerWidth <= 560;
+    var maxTop = isMobile ? Math.min(130, stageH - modH - 30) : (stageH - modH - 30);
     var targetX = Math.round(wp.xRatio * (stageW - modW));
-    var targetY = Math.round(wp.yRatio * (stageH - modH));
+    var targetY = Math.round((isMobile ? Math.min(0.25, wp.yRatio) : wp.yRatio) * (stageH - modH));
     targetX = Math.max(6, Math.min(stageW - modW - 6, targetX));
-    targetY = Math.max(6, Math.min(stageH - modH - 20, targetY));
+    targetY = Math.max(6, Math.min(maxTop, targetY));
 
     var curLeft = modBtn.offsetLeft;
     var deltaX = targetX - curLeft;
@@ -1458,6 +1460,7 @@
   scheduleHeroAutonomous();
 
   var isDraggingMod = false;
+  var modPointerDown = false;
   var dragStartX = 0, dragStartY = 0;
   var initModLeft = 0, initModTop = 0;
   var dragDist = 0;
@@ -1497,6 +1500,7 @@
 
   modBtn.addEventListener('pointerdown', function (e) {
     if (e.button !== undefined && e.button !== 0) return;
+    modPointerDown = true;
     clearTimeout(autonomousTimer);
     clearTimeout(idleTimer);
     isDraggingMod = false;
@@ -1517,6 +1521,7 @@
   });
 
   modBtn.addEventListener('pointermove', function (e) {
+    if (!modPointerDown) return; // CRITICAL FIX: never drag on hover! Only drag when mouse/touch is pressed down
     var dx = e.clientX - dragStartX;
     var dy = e.clientY - dragStartY;
     dragDist = Math.hypot(dx, dy);
@@ -1534,11 +1539,15 @@
 
       var sW = stage.offsetWidth;
       var sH = stage.offsetHeight;
-      var mW = modBtn.offsetWidth || 120;
+      var isMobile = window.innerWidth <= 560;
+      var mW = modBtn.offsetWidth || (isMobile ? 92 : 120);
       var mH = modBtn.offsetHeight || mW;
 
+      // In mobile view, keep moderator in upper stage area so he never hides behind the platform
+      var maxTop = isMobile ? Math.min(130, sH - mH - 30) : (sH - mH - 40);
+
       var curX = Math.max(0, Math.min(sW - mW, initModLeft + dx));
-      var curY = Math.max(0, Math.min(sH - mH, initModTop + dy));
+      var curY = Math.max(0, Math.min(maxTop, initModTop + dy));
 
       modBtn.style.left = curX + 'px';
       modBtn.style.top = curY + 'px';
@@ -1558,6 +1567,8 @@
   });
 
   function endModDrag(e) {
+    if (!modPointerDown) return;
+    modPointerDown = false;
     try { modBtn.releasePointerCapture(e.pointerId); } catch (err) {}
     if (modSvg) modSvg.style.transform = '';
 
@@ -2097,12 +2108,14 @@
     }
 
     var isDraggingGhost = false;
+    var ghostPointerDown = false;
     var ghostDragStartX = 0, ghostDragStartY = 0;
     var ghostDragInitX = 0, ghostDragInitY = 0;
     var ghostDragDist = 0;
 
     ghost.addEventListener('pointerdown', function (e) {
       if (e.button !== undefined && e.button !== 0) return;
+      ghostPointerDown = true;
       isDraggingGhost = false;
       ghostDragDist = 0;
       ghostDragStartX = e.clientX;
@@ -2113,6 +2126,7 @@
     });
 
     ghost.addEventListener('pointermove', function (e) {
+      if (!ghostPointerDown) return; // CRITICAL FIX: never drag on hover!
       var dx = e.clientX - ghostDragStartX;
       var dy = e.clientY - ghostDragStartY;
       ghostDragDist = Math.hypot(dx, dy);
@@ -2148,6 +2162,8 @@
     });
 
     function endGhostDrag(e) {
+      if (!ghostPointerDown) return;
+      ghostPointerDown = false;
       try { ghost.releasePointerCapture(e.pointerId); } catch (err) {}
 
       if (!isDraggingGhost) {
