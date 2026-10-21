@@ -1012,6 +1012,9 @@
         f.style.width = t.offsetWidth + 'px'; f.style.height = t.offsetHeight + 'px';
         board.appendChild(f);
         f.addEventListener('animationend', function () { f.remove(); });
+        if (typeof saySuggestion === 'function' && (window.scrollY || 0) < 650) {
+          saySuggestion({ face: 'shocked', text: "Told you! Fake floor! There are dozens more in the actual game.", sub: "Stage 3 spoiler" }, 4500);
+        }
       });
       t.addEventListener('animationend', function (e) { if (e.animationName === 'fakefall') t.classList.remove('fake'); });
     } else if (!reduced) {
@@ -1132,8 +1135,56 @@
     modFaceTimer = setTimeout(function () {
       setModFace(modFace, 'smug');
     }, 3500);
+
+    clearTimeout(idleTimer);
+    scheduleIdleSuggestion();
   });
   modSvg.addEventListener('animationend', function (e) { if (e.animationName === 'roll') modSvg.classList.remove('roll'); });
+
+  // ---------- Moderator Suggestions & alive reactions (face changes with every suggestion)
+  var modSuggestions = [
+    { face: 'wink', text: "The download is free, you know. I don't get paid until you press that green button.", sub: "Pro tip" },
+    { face: 'shocked', text: "Wait, you're still reading? The actual game has twelve whole troll stages!", sub: "Gameplay alert" },
+    { face: 'sideEye', text: "Still deciding? The robot has been blinking at you for three straight minutes.", sub: "He's judging you" },
+    { face: 'cool', text: "Stage 12 is totally fair and definitely won't make you rage-quit. Trust me.", sub: "100% honest host" },
+    { face: 'crying', text: "Please download it... our senior developer stayed up until 3 AM polishing the physics!", sub: "Developer tears" },
+    { face: 'annoyed', text: "Look at that big green button. It's practically begging to be pressed.", sub: "Just click it" },
+    { face: 'smug', text: "Host tip: If you fall into the void, remember that it's a feature, not a bug.", sub: "Game show logic" },
+    { face: 'surprised', text: "Did I mention there are two boss fights? One of them is technically my cousin.", sub: "Lore reveal" },
+    { face: 'cool', text: "Only 38 megabytes! Smaller than your average video game patch!", sub: "Lightweight rage" },
+    { face: 'wink', text: "Controllers work automatically! Plug and play, then plug and cry.", sub: "Controller support" }
+  ];
+  var suggestionIdx = 0;
+  var idleTimer = null;
+
+  function saySuggestion(item, duration) {
+    if (!item || !modFace) return;
+    setModFace(modFace, item.face);
+    var bubbleMsg = item.text + (item.sub ? '<small>' + item.sub + '</small>' : '');
+    setBubbleSmooth(bubble, bubbleMsg, true);
+    restart(bubble, 'pop');
+    restart(modBtn, 'poked');
+
+    clearTimeout(modFaceTimer);
+    modFaceTimer = setTimeout(function () {
+      setModFace(modFace, 'smug');
+    }, duration || 4500);
+  }
+
+  function scheduleIdleSuggestion() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      var scrollY = window.scrollY || window.pageYOffset;
+      // Only suggest when looking at the hero area
+      if (scrollY < 550) {
+        var item = modSuggestions[suggestionIdx % modSuggestions.length];
+        suggestionIdx++;
+        saySuggestion(item, 5000);
+      }
+      scheduleIdleSuggestion();
+    }, 12000 + Math.random() * 4000);
+  }
+  scheduleIdleSuggestion();
 
   // ---------- the robot: blinks, hops when you reach for the download
   var robot = document.getElementById('robot');
@@ -1150,8 +1201,32 @@
   robot.addEventListener('animationend', function (e) {
     if (e.animationName === 'hop') { robot.classList.remove('hop'); setTimeout(function () { robot.classList.remove('love'); }, 500); }
   });
-  dl.addEventListener('pointerenter', hop);
-  dl.addEventListener('focus', hop);
+
+  // Moderator & Robot download button interactions
+  var dlHoverLines = [
+    { face: 'wink', text: "Yes! That one! Click the big green button!", sub: "Press it!" },
+    { face: 'surprised', text: "Ooh, reaching for the download? Bold move, future champion!", sub: "Stage 1 awaits" },
+    { face: 'cool', text: "It's free, it's 38MB, and it has 100% chance of making you laugh.", sub: "Guaranteed fun" },
+    { face: 'shocked', text: "DON'T HESITATE! The big green button is waiting for you!", sub: "Free for Windows" }
+  ];
+  var dlHoverIdx = 0;
+
+  dl.addEventListener('pointerenter', function () {
+    hop();
+    clearTimeout(idleTimer);
+    var item = dlHoverLines[dlHoverIdx % dlHoverLines.length];
+    dlHoverIdx++;
+    saySuggestion(item, 4000);
+    scheduleIdleSuggestion();
+  });
+  dl.addEventListener('focus', function () {
+    hop();
+    saySuggestion(dlHoverLines[0], 4000);
+  });
+  dl.addEventListener('click', function () {
+    clearTimeout(idleTimer);
+    saySuggestion({ face: 'cool', text: "DOWNLOAD INITIATED! 🎮 May your patience survive Stage 3!", sub: "Good luck, you'll need it!" }, 6000);
+  });
 
   // ---------- 3D tilt of the hero stage, following the pointer
   var scene = document.getElementById('scene'), stage = document.getElementById('stage3d');
