@@ -186,10 +186,33 @@
   .robot { position: absolute; left: 50%; transform: translateX(-56%); bottom: 82px; width: 58%; max-width: 320px; filter: drop-shadow(0 16px 10px rgba(20, 0, 50, .35)); }
   .mod {
     position: absolute; right: 0; top: 70px; width: 34%; max-width: 190px;
-    background: none; border: 0; padding: 0; cursor: pointer;
+    background: none; border: 0; padding: 0; cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     animation: hover 3.2s ease-in-out infinite;
+    z-index: 28;
+    will-change: left, top, transform;
   }
-  .mod svg { width: 100%; height: auto; display: block; }
+  .mod.dragging {
+    cursor: grabbing !important;
+    animation: none !important;
+    transition: none !important;
+    z-index: 60 !important;
+  }
+  .mod.flying {
+    animation: none !important;
+    transition: left 1.5s cubic-bezier(.25, 1, .3, 1), top 1.5s cubic-bezier(.25, 1, .3, 1) !important;
+  }
+  .mod.dropped {
+    animation: dropBounce .4s cubic-bezier(.3, 1.8, .5, 1);
+  }
+  @keyframes dropBounce {
+    0% { transform: scale(1.15, 0.85); }
+    50% { transform: scale(0.9, 1.12); }
+    100% { transform: scale(1, 1); }
+  }
+  .mod svg { width: 100%; height: auto; display: block; pointer-events: none; }
   .mod:active svg { transform: rotate(-14deg) scale(.95); }
   .mod .rotor { transform-origin: 80px 22px; animation: spin .5s linear infinite; }
   @keyframes hover { 50% { transform: translateY(12px); } }
@@ -216,6 +239,19 @@
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
     border-left: 11px solid var(--paper);
+  }
+  .bubble.flip {
+    border-radius: 20px 20px 20px 4px;
+  }
+  .bubble.flip::after {
+    right: auto;
+    left: -10px;
+    border-left: none;
+    border-right: 11px solid var(--paper);
+  }
+  .robot.look-up .r-head {
+    transform: rotate(5deg) translateY(-4px);
+    transition: transform .35s ease;
   }
   .bubble.changing, .mod-ghost-bubble.changing {
     opacity: 0 !important;
@@ -615,6 +651,15 @@
       border-bottom: 6px solid transparent;
       border-left: 10px solid var(--paper);
     }
+    .bubble.flip {
+      border-radius: 16px 16px 16px 4px;
+    }
+    .bubble.flip::after {
+      right: auto;
+      left: -9px;
+      border-left: none;
+      border-right: 10px solid var(--paper);
+    }
     .bubble small { text-align: left; font-size: 11px; margin-top: 3px; }
     .mod { right: 6px; top: 10px; width: 92px; z-index: 25; }
     .platform { height: 95px; }
@@ -664,14 +709,19 @@
     height: auto;
     z-index: 40;
     pointer-events: none;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     opacity: 0;
     filter: drop-shadow(0 8px 24px rgba(36, 16, 71, .45));
     transition: opacity .45s ease;
     will-change: left, top, transform, opacity;
   }
   .mod-ghost.visible { opacity: 1; pointer-events: auto; }
+  .mod-ghost.dragging { cursor: grabbing !important; z-index: 70 !important; }
   .mod-ghost .rotor { transform-origin: 80px 22px; animation: spin .5s linear infinite; }
-  .mod-ghost svg { width: 100%; height: auto; display: block; cursor: pointer; }
+  .mod-ghost svg { width: 100%; height: auto; display: block; pointer-events: none; }
 
   /* speech bubble that follows the ghost */
   .mod-ghost-bubble {
@@ -689,17 +739,27 @@
     box-shadow: 0 4px 0 rgba(43, 27, 74, .2), 0 8px 24px rgba(36, 16, 71, .3);
     border: 2px solid rgba(255, 255, 255, .85);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     white-space: normal;
     max-width: 260px;
     transform: scale(0.92) translateY(4px);
-    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1);
+    transition: opacity .22s ease, transform .22s cubic-bezier(.2, 1.4, .4, 1), visibility .22s ease;
     will-change: left, top, opacity, transform;
   }
   .mod-ghost-bubble.visible {
     opacity: 1 !important;
+    visibility: visible !important;
     pointer-events: auto;
     transform: scale(1) translateY(0);
+  }
+  .mod-ghost:not(.visible) ~ .mod-ghost-bubble,
+  .mod-ghost-bubble:not(.visible),
+  body:not(:has(.mod-ghost.visible)) .mod-ghost-bubble {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
   .mod-ghost-bubble.flip { border-radius: 16px 16px 16px 4px; }
   .mod-ghost-bubble small { display: block; margin-top: 3px; font-size: 11px; color: var(--ink-soft); font-weight: 400; }
@@ -1127,6 +1187,37 @@
     board.appendChild(t);
   });
 
+  // ---------- particle trails pool (shared by hero & companion moderators)
+  var trailPool = [];
+  var trailIdx = 0;
+  var TRAIL_COUNT = 16;
+  var trailColors = ['#FF7EB6', '#FFD23F', '#3DDCFF', '#9BE564', '#FF8C42', '#9B5DE5'];
+  for (var ti = 0; ti < TRAIL_COUNT; ti++) {
+    var dot = document.createElement('div');
+    dot.className = 'mod-trail';
+    dot.style.background = trailColors[ti % trailColors.length];
+    document.body.appendChild(dot);
+    trailPool.push(dot);
+  }
+  var trailThrottle = 0;
+
+  function spawnTrail(x, y) {
+    if (reduced) return;
+    var now = performance.now();
+    if (now - trailThrottle < 45) return;
+    trailThrottle = now;
+    var d = trailPool[trailIdx % TRAIL_COUNT];
+    trailIdx++;
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    if (d.animate) {
+      d.animate([
+        { opacity: .75, transform: 'scale(1) translate(0, 0)' },
+        { opacity: 0, transform: 'scale(.2) translate(' + ((Math.random() - .5) * 50) + 'px, ' + (15 + Math.random() * 30) + 'px)' }
+      ], { duration: 600 + Math.random() * 400, easing: 'ease-out', fill: 'forwards' });
+    }
+  }
+
   // ---------- poke the Moderator (facial expressions + humor)
   var modFaces = {
     smug: '<path d="M58 88q7-9 14 0M88 88q7-9 14 0" stroke="#FFD23F" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M74 100q6 5 12 0" stroke="#FFD23F" stroke-width="4" fill="none" stroke-linecap="round"/>',
@@ -1193,9 +1284,185 @@
   var pokes = 0, bubble = document.getElementById('bubble');
   var modFace = document.getElementById('mod-face');
   var modBtn = document.getElementById('mod');
+  var modSvg = document.getElementById('mod-svg');
+  // scene and stage declared earlier
+  var robotEl = document.getElementById('robot');
   var modFaceTimer = null;
 
-  modBtn.addEventListener('click', function () {
+  // Drag and drop reactions (NO EMOJIS)
+  var heroDragLines = [
+    'Unhand the host! This is not in my contract!',
+    'Wait wait wait! I am not a draggable desktop icon!',
+    'Put me down! You are messing with my aerodynamics!',
+    'I am an award-winning game show host, not a fridge magnet!',
+    'Who authorized this relocation?! Call security!',
+    'Mayday! Host being kidnapped in broad daylight!'
+  ];
+
+  var heroDropLines = [
+    'My internal gyroscope will need five minutes to recalibrate.',
+    'Rude. Positively rude. I am filing a union grievance.',
+    'And stay back! I am choosing this exact coordinate out of spite.',
+    'Ouch. My pride took 50 points of fall damage.',
+    'Fine! I will hover right here! The view is mediocre anyway.'
+  ];
+
+  // Stage patrol waypoints for autonomous flight (NO EMOJIS)
+  var modWaypoints = [
+    {
+      name: 'right',
+      xRatio: 0.82,
+      yRatio: 0.12,
+      face: 'smug',
+      text: 'Back to my home perch. Did you miss me?',
+      sub: 'Classic studio spot'
+    },
+    {
+      name: 'center',
+      xRatio: 0.44,
+      yRatio: 0.05,
+      face: 'cool',
+      text: 'Surveying the arena from above. Looking sharp, robot!',
+      sub: 'Overhead drone mode'
+    },
+    {
+      name: 'left',
+      xRatio: 0.04,
+      yRatio: 0.12,
+      face: 'wink',
+      text: 'Relocating to the left wing! Better lighting over here.',
+      sub: 'Left wing tour'
+    },
+    {
+      name: 'low',
+      xRatio: 0.72,
+      yRatio: 0.38,
+      face: 'sideEye',
+      text: 'Checking the platform foundations. Looks 40% edible.',
+      sub: 'Structural inspection'
+    }
+  ];
+
+  var currentWaypointIdx = 0;
+  var autonomousTimer = null;
+  var isHeroAutonomous = false;
+
+  function updateHeroBubblePos(modLeft, modTop, modW) {
+    if (!bubble || !stage) return;
+    var stageW = stage.offsetWidth || 500;
+    var stageH = stage.offsetHeight || 310;
+    var isMobile = window.innerWidth <= 560;
+
+    if (modLeft > stageW * 0.45) {
+      // Mod is on right half -> bubble sits to the left of mod
+      bubble.classList.remove('flip');
+      if (isMobile) {
+        bubble.style.left = '8px';
+        bubble.style.right = (stageW - modLeft + 8) + 'px';
+        bubble.style.top = Math.max(10, Math.min(stageH - 75, modTop - 4)) + 'px';
+        bubble.style.maxWidth = Math.max(120, modLeft - 14) + 'px';
+      } else {
+        bubble.style.left = 'auto';
+        bubble.style.right = (stageW - modLeft + 14) + 'px';
+        bubble.style.top = Math.max(10, Math.min(stageH - 120, modTop - 20)) + 'px';
+        bubble.style.maxWidth = Math.min(290, modLeft - 20) + 'px';
+      }
+    } else {
+      // Mod is on left half -> bubble sits to the right of mod
+      bubble.classList.add('flip');
+      if (isMobile) {
+        bubble.style.left = (modLeft + modW + 8) + 'px';
+        bubble.style.right = '8px';
+        bubble.style.top = Math.max(10, Math.min(stageH - 75, modTop - 4)) + 'px';
+        bubble.style.maxWidth = Math.max(120, stageW - (modLeft + modW) - 14) + 'px';
+      } else {
+        bubble.style.right = 'auto';
+        bubble.style.left = (modLeft + modW + 14) + 'px';
+        bubble.style.top = Math.max(10, Math.min(stageH - 120, modTop - 20)) + 'px';
+        bubble.style.maxWidth = Math.min(290, stageW - (modLeft + modW) - 20) + 'px';
+      }
+    }
+  }
+
+  function flyHeroToWaypoint(idx) {
+    if (!stage || !modBtn || isDraggingMod) return;
+    var stageW = stage.offsetWidth;
+    var stageH = stage.offsetHeight;
+    if (!stageW || !stageH) return;
+
+    var wp = modWaypoints[idx % modWaypoints.length];
+    currentWaypointIdx = idx % modWaypoints.length;
+
+    var modW = modBtn.offsetWidth || (window.innerWidth <= 560 ? 92 : 180);
+    var modH = modBtn.offsetHeight || modW;
+
+    var targetX = Math.round(wp.xRatio * (stageW - modW));
+    var targetY = Math.round(wp.yRatio * (stageH - modH));
+    targetX = Math.max(6, Math.min(stageW - modW - 6, targetX));
+    targetY = Math.max(6, Math.min(stageH - modH - 20, targetY));
+
+    var curLeft = modBtn.offsetLeft;
+    var deltaX = targetX - curLeft;
+    var tiltDeg = deltaX > 15 ? 12 : (deltaX < -15 ? -12 : 0);
+
+    isHeroAutonomous = true;
+    modBtn.classList.add('flying');
+    modBtn.style.left = targetX + 'px';
+    modBtn.style.top = targetY + 'px';
+    modBtn.style.right = 'auto';
+
+    if (modSvg && tiltDeg !== 0) {
+      modSvg.style.transition = 'transform .45s ease';
+      modSvg.style.transform = 'rotate(' + tiltDeg + 'deg)';
+    }
+
+    if (robotEl) {
+      if (wp.name === 'center') {
+        robotEl.classList.add('look-up');
+      } else {
+        robotEl.classList.remove('look-up');
+      }
+    }
+
+    for (var bi = 0; bi < 4; bi++) {
+      setTimeout(function () {
+        var r = modBtn.getBoundingClientRect();
+        spawnTrail(r.left + modW / 2, r.top + modH / 2);
+      }, bi * 180);
+    }
+
+    updateHeroBubblePos(targetX, targetY, modW);
+
+    saySuggestion({ face: wp.face, text: wp.text, sub: wp.sub }, 4800);
+
+    setTimeout(function () {
+      modBtn.classList.remove('flying');
+      if (modSvg) {
+        modSvg.style.transition = '';
+        modSvg.style.transform = '';
+      }
+      isHeroAutonomous = false;
+    }, 1500);
+  }
+
+  function scheduleHeroAutonomous() {
+    clearTimeout(autonomousTimer);
+    autonomousTimer = setTimeout(function () {
+      var scrollY = window.scrollY || window.pageYOffset;
+      if (scrollY < 650 && !isDraggingMod) {
+        flyHeroToWaypoint(currentWaypointIdx + 1);
+      }
+      scheduleHeroAutonomous();
+    }, 17000 + Math.random() * 5000);
+  }
+  scheduleHeroAutonomous();
+
+  var isDraggingMod = false;
+  var dragStartX = 0, dragStartY = 0;
+  var initModLeft = 0, initModTop = 0;
+  var dragDist = 0;
+
+  function triggerPoke() {
     pokes++;
     var rx;
     if (pokes === 10) {
@@ -1215,12 +1482,10 @@
     setBubbleSmooth(bubble, bubbleMsg, true);
     restart(bubble, 'pop');
 
-    // squish micro-animation
     restart(modBtn, 'poked');
 
-    if (pokes % 3 === 0) restart(modSvg, 'roll');
+    if (pokes % 3 === 0 && modSvg) restart(modSvg, 'roll');
 
-    // revert face to default smug after 3.5s of calm
     clearTimeout(modFaceTimer);
     modFaceTimer = setTimeout(function () {
       setModFace(modFace, 'smug');
@@ -1228,8 +1493,108 @@
 
     clearTimeout(idleTimer);
     scheduleIdleSuggestion();
+  }
+
+  modBtn.addEventListener('pointerdown', function (e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    clearTimeout(autonomousTimer);
+    clearTimeout(idleTimer);
+    isDraggingMod = false;
+    dragDist = 0;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+
+    var sRect = stage.getBoundingClientRect();
+    var mRect = modBtn.getBoundingClientRect();
+    initModLeft = mRect.left - sRect.left;
+    initModTop = mRect.top - sRect.top;
+
+    modBtn.style.left = initModLeft + 'px';
+    modBtn.style.top = initModTop + 'px';
+    modBtn.style.right = 'auto';
+
+    try { modBtn.setPointerCapture(e.pointerId); } catch (err) {}
   });
-  modSvg.addEventListener('animationend', function (e) { if (e.animationName === 'roll') modSvg.classList.remove('roll'); });
+
+  modBtn.addEventListener('pointermove', function (e) {
+    var dx = e.clientX - dragStartX;
+    var dy = e.clientY - dragStartY;
+    dragDist = Math.hypot(dx, dy);
+
+    if (dragDist > 6) {
+      if (!isDraggingMod) {
+        isDraggingMod = true;
+        modBtn.classList.add('dragging', 'fast-spin');
+        modBtn.classList.remove('flying', 'dropped');
+        setModFace(modFace, 'shocked');
+
+        var dragText = heroDragLines[Math.floor(Math.random() * heroDragLines.length)];
+        setBubbleSmooth(bubble, dragText + '<small>Host in transit!</small>', true);
+      }
+
+      var sW = stage.offsetWidth;
+      var sH = stage.offsetHeight;
+      var mW = modBtn.offsetWidth || 120;
+      var mH = modBtn.offsetHeight || mW;
+
+      var curX = Math.max(0, Math.min(sW - mW, initModLeft + dx));
+      var curY = Math.max(0, Math.min(sH - mH, initModTop + dy));
+
+      modBtn.style.left = curX + 'px';
+      modBtn.style.top = curY + 'px';
+
+      var tilt = Math.max(-24, Math.min(24, (e.movementX || dx * 0.1) * 2.5));
+      if (modSvg) modSvg.style.transform = 'rotate(' + tilt + 'deg) scale(1.08)';
+
+      spawnTrail(e.clientX, e.clientY + 20);
+      updateHeroBubblePos(curX, curY, mW);
+
+      if (robotEl) {
+        var isNearCenter = Math.abs(curX - (sW * 0.44)) < sW * 0.18;
+        if (isNearCenter) robotEl.classList.add('look-up');
+        else robotEl.classList.remove('look-up');
+      }
+    }
+  });
+
+  function endModDrag(e) {
+    try { modBtn.releasePointerCapture(e.pointerId); } catch (err) {}
+    if (modSvg) modSvg.style.transform = '';
+
+    if (!isDraggingMod) {
+      triggerPoke();
+    } else {
+      isDraggingMod = false;
+      modBtn.classList.remove('dragging', 'fast-spin');
+      modBtn.classList.add('dropped');
+      setTimeout(function () { modBtn.classList.remove('dropped'); }, 450);
+
+      setModFace(modFace, 'dizzy');
+      var dropText = heroDropLines[Math.floor(Math.random() * heroDropLines.length)];
+      setBubbleSmooth(bubble, dropText + '<small>Landing impact</small>', true);
+
+      clearTimeout(modFaceTimer);
+      modFaceTimer = setTimeout(function () {
+        setModFace(modFace, 'smug');
+      }, 3500);
+
+      var sW = stage.offsetWidth;
+      var curX = modBtn.offsetLeft;
+      if (robotEl && Math.abs(curX - (sW * 0.44)) > sW * 0.22) {
+        robotEl.classList.remove('look-up');
+      }
+    }
+    scheduleHeroAutonomous();
+    scheduleIdleSuggestion();
+  }
+
+  modBtn.addEventListener('pointerup', endModDrag);
+  modBtn.addEventListener('pointercancel', endModDrag);
+  if (modSvg) {
+    modSvg.addEventListener('animationend', function (e) {
+      if (e.animationName === 'roll') modSvg.classList.remove('roll');
+    });
+  }
 
   // ---------- Moderator Suggestions & alive reactions (face changes with every suggestion)
   var modSuggestions = [
@@ -1432,7 +1797,7 @@
     ];
 
     function setGhostSuggestion(item) {
-      if (!item || !ghostFaceEl) return;
+      if (!item || !ghostFaceEl || !ghostVisible) return;
       setModFace(ghostFaceEl, item.face || 'smug');
       var msg = item.text + (item.sub ? '<small>' + item.sub + '</small>' : '');
       setBubbleSmooth(ghostBubble, msg, true);
@@ -1499,7 +1864,18 @@
       var viewW = window.innerWidth;
 
       // only show after hero
-      var shouldShow = sy > heroBottom - viewH * 0.4 && sy < footerTop - viewH * 0.2;
+      var shouldShow = sy > heroBottom - 30 && sy < footerTop - viewH * 0.2;
+
+      if (!shouldShow) {
+        if (ghostVisible) {
+          ghost.classList.remove('visible');
+          ghostVisible = false;
+        }
+        ghostBubble.classList.remove('visible');
+        ghostBubble.style.display = 'none';
+        return;
+      }
+      ghostBubble.style.display = '';
 
       if (shouldShow && !ghostVisible) {
         ghost.classList.add('visible');
@@ -1509,17 +1885,11 @@
           ghostSuggestionIdx++;
           setGhostSuggestion(item);
         }
-      } else if (!shouldShow && ghostVisible) {
-        ghost.classList.remove('visible');
-        ghostBubble.classList.remove('visible');
-        ghostVisible = false;
       }
-
-      if (!ghostVisible) return;
 
       // wild sine-wave across the viewport
       var scrollRange = footerTop - heroBottom;
-      var progress = Math.max(0, Math.min(1, (sy - (heroBottom - viewH * 0.5)) / scrollRange));
+      var progress = Math.max(0, Math.min(1, (sy - heroBottom) / Math.max(100, scrollRange)));
 
       // Multiple overlapping sine waves for chaotic movement
       var wave1 = Math.sin(progress * Math.PI * 6) * 0.38;
@@ -1530,16 +1900,21 @@
       var gw = ghost.offsetWidth || (viewW <= 560 ? 95 : 120);
       var padding = 20;
 
-      ghostTargetX = (viewW / 2) + combinedWave * (viewW / 2 - gw / 2 - padding) - gw / 2;
+      if (!isDraggingGhost) {
+        var baseCenterX = (ghostSide === 'left') ? (viewW * 0.22) : (viewW * 0.78);
+        var roamWidth = (viewW * 0.18);
+        ghostTargetX = baseCenterX + combinedWave * roamWidth - gw / 2;
+        ghostTargetX = Math.max(12, Math.min(viewW - gw - 12, ghostTargetX));
 
-      var yWave = Math.sin(progress * Math.PI * 8) * 30 + Math.cos(progress * Math.PI * 3.5) * 15;
-      ghostTargetY = viewH * 0.35 + yWave;
+        var yWave = Math.sin(progress * Math.PI * 8) * 30 + Math.cos(progress * Math.PI * 3.5) * 15;
+        ghostTargetY = viewH * 0.35 + yWave;
 
-      ghostRotTarget = combinedWave * 25;
+        ghostRotTarget = combinedWave * 25;
 
-      ghostCurrentX += (ghostTargetX - ghostCurrentX) * 0.07;
-      ghostCurrentY += (ghostTargetY - ghostCurrentY) * 0.07;
-      ghostRotCurrent += (ghostRotTarget - ghostRotCurrent) * 0.06;
+        ghostCurrentX += (ghostTargetX - ghostCurrentX) * 0.07;
+        ghostCurrentY += (ghostTargetY - ghostCurrentY) * 0.07;
+        ghostRotCurrent += (ghostRotTarget - ghostRotCurrent) * 0.06;
+      }
 
       var bob = Math.sin(performance.now() / 500) * 6;
 
@@ -1631,7 +2006,7 @@
     }
     requestAnimationFrame(ghostLoop);
 
-    // Click on ghost moderator (humorous poke reactions)
+    // Click & Drag on ghost moderator with Autonomous Side-Switching (NO EMOJIS)
     var ghostPokes = 0;
     var ghostPokeReactions = [
       { face: 'surprised', text: "HEY! I'm flying here! You want me to crash?!" },
@@ -1655,7 +2030,47 @@
       { face: 'cool', text: "I'm contractually obligated to follow you." }
     ];
 
-    ghost.addEventListener('click', function () {
+    var ghostDragLines = [
+      "Air traffic control! We have a rogue cursor hijacking the craft!",
+      "Unhand the drone! My hazard pay does not cover abductions!",
+      "Wait! I have an approved flight plan! Put me down!",
+      "Hey! Turbulence warning! Keep your hands off the fuselage!"
+    ];
+
+    var ghostDropLines = [
+      "Emergency landing complete. Recalibrating thrusters.",
+      "I preferred my previous altitude, but fine.",
+      "Gyroscope spinning wildly... give me a second.",
+      "Safe and sound. Do not do that again, trainee."
+    ];
+
+    var ghostSide = 'right';
+    var ghostSideSwitchTimer = null;
+
+    function scheduleGhostSideSwitch() {
+      clearTimeout(ghostSideSwitchTimer);
+      ghostSideSwitchTimer = setTimeout(function () {
+        if (ghostVisible && !isDraggingGhost && !isFastScrolling) {
+          ghostSide = (ghostSide === 'right' ? 'left' : 'right');
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'cool');
+          ghostCustomMessage = true;
+          var sideText = ghostSide === 'left' ?
+            "Banking left for a tactical vantage point! <small>Autonomous detour</small>" :
+            "Returning to starboard! Better perspective over here. <small>Autonomous detour</small>";
+          setBubbleSmooth(ghostBubble, sideText, true);
+
+          clearTimeout(ghostCustomTimer);
+          ghostCustomTimer = setTimeout(function () {
+            ghostCustomMessage = false;
+            if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
+          }, 4500);
+        }
+        scheduleGhostSideSwitch();
+      }, 22000 + Math.random() * 8000);
+    }
+    scheduleGhostSideSwitch();
+
+    function triggerGhostPoke() {
       ghostPokes++;
       ghostCustomMessage = true;
       clearTimeout(recoverTimeout);
@@ -1679,7 +2094,90 @@
         ghostSuggestionIdx++;
         setGhostSuggestion(item);
       }, 4500);
+    }
+
+    var isDraggingGhost = false;
+    var ghostDragStartX = 0, ghostDragStartY = 0;
+    var ghostDragInitX = 0, ghostDragInitY = 0;
+    var ghostDragDist = 0;
+
+    ghost.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      isDraggingGhost = false;
+      ghostDragDist = 0;
+      ghostDragStartX = e.clientX;
+      ghostDragStartY = e.clientY;
+      ghostDragInitX = ghostCurrentX;
+      ghostDragInitY = ghostCurrentY;
+      try { ghost.setPointerCapture(e.pointerId); } catch (err) {}
     });
+
+    ghost.addEventListener('pointermove', function (e) {
+      var dx = e.clientX - ghostDragStartX;
+      var dy = e.clientY - ghostDragStartY;
+      ghostDragDist = Math.hypot(dx, dy);
+
+      if (ghostDragDist > 6) {
+        if (!isDraggingGhost) {
+          isDraggingGhost = true;
+          ghost.classList.add('dragging', 'fast-spin');
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'shocked');
+          ghostCustomMessage = true;
+          clearTimeout(recoverTimeout);
+
+          var dragText = ghostDragLines[Math.floor(Math.random() * ghostDragLines.length)];
+          setBubbleSmooth(ghostBubble, dragText + '<small>Involuntary flight</small>', true);
+        }
+
+        var viewW = window.innerWidth;
+        var viewH = window.innerHeight;
+        var gw = ghost.offsetWidth || 100;
+        var gh = ghost.offsetHeight || 100;
+
+        ghostCurrentX = Math.max(8, Math.min(viewW - gw - 8, ghostDragInitX + dx));
+        ghostCurrentY = Math.max(10, Math.min(viewH - gh - 20, ghostDragInitY + dy));
+        ghostTargetX = ghostCurrentX;
+        ghostTargetY = ghostCurrentY;
+
+        var tilt = Math.max(-25, Math.min(25, (e.movementX || dx * 0.1) * 2.5));
+        ghostRotCurrent = tilt;
+
+        spawnTrail(e.clientX, e.clientY + 20);
+        updateGhost();
+      }
+    });
+
+    function endGhostDrag(e) {
+      try { ghost.releasePointerCapture(e.pointerId); } catch (err) {}
+
+      if (!isDraggingGhost) {
+        triggerGhostPoke();
+      } else {
+        isDraggingGhost = false;
+        ghost.classList.remove('dragging', 'fast-spin');
+        ghost.classList.add('dropped');
+        setTimeout(function () { ghost.classList.remove('dropped'); }, 450);
+
+        if (ghostFaceEl) setModFace(ghostFaceEl, 'dizzy');
+        var dropText = ghostDropLines[Math.floor(Math.random() * ghostDropLines.length)];
+        setBubbleSmooth(ghostBubble, dropText + '<small>Forced landing</small>', true);
+
+        // Update preferred side based on drop position
+        ghostSide = (ghostCurrentX > window.innerWidth / 2) ? 'right' : 'left';
+
+        clearTimeout(ghostCustomTimer);
+        ghostCustomTimer = setTimeout(function () {
+          ghostCustomMessage = false;
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
+          var item = ghostSuggestions[ghostSuggestionIdx % ghostSuggestions.length];
+          ghostSuggestionIdx++;
+          setGhostSuggestion(item);
+        }, 3800);
+      }
+    }
+
+    ghost.addEventListener('pointerup', endGhostDrag);
+    ghost.addEventListener('pointercancel', endGhostDrag);
   }
 
 })();
