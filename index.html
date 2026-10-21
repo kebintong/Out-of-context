@@ -537,10 +537,27 @@
   @media (max-width: 560px) {
     body { font-size: 16px; }
     .topbar nav { display: none; }
-    .scene { height: 400px; }
+    .scene { height: 430px; }
+    .bubble {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 6px;
+      width: auto;
+      max-width: calc(100% - 24px);
+      z-index: 35;
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 18px;
+      text-align: center;
+      translate: 0 0 200px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+    }
+    .bubble small { text-align: center; }
+    .mod { right: 8px; top: 82px; width: 110px; z-index: 20; }
     .platform { height: 120px; }
     .platform .top { height: 70px; }
-    .robot { bottom: 64px; }
+    .robot { bottom: 58px; width: 54%; }
     .board { grid-template-columns: repeat(2, 1fr); }
     .btn { width: 100%; justify-content: center; }
     #credits { text-align: center; }
@@ -552,18 +569,26 @@
     .topbar { justify-content: center; }
     .topbar .mark { font-size: 22px; }
     footer .wrap { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+    .mod-ghost { width: 95px; }
+    .mod-ghost-bubble {
+      white-space: normal;
+      max-width: min(220px, 72vw);
+      font-size: 12px;
+      padding: 8px 12px;
+      z-index: 60;
+      text-align: center;
+      border-radius: 14px;
+    }
+    .tv { padding: 10px; border-radius: 22px; }
+    .tv-play { width: 80px; height: 80px; }
+    .tv-play svg { width: 36px; height: 36px; }
+    .tv-time { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .title .l, .mod, .mod .rotor, .robot-svg *, .robot.hop .robot-svg, .platform .top, .tv, .soon .soon-big, .tv.playing .onair,
     .title .l.jump, .tile.fake, .bubble.pop, .mod-svg.roll, .mod.poked .mod-svg, .mod-ghost.poked .mod-svg, .mod-ghost.queasy svg, .mod.queasy svg { animation: none !important; }
     .stage3d { transform: none !important; }
     html { scroll-behavior: auto; }
-  }
-  @media (max-width: 560px) {
-    .tv { padding: 10px; border-radius: 22px; }
-    .tv-play { width: 80px; height: 80px; }
-    .tv-play svg { width: 36px; height: 36px; }
-    .tv-time { display: none; }
   }
 
   /* ------------------------------------------------------------------ scroll-following Moderator */
@@ -1422,17 +1447,32 @@
       ghost.style.top = (ghostCurrentY + bob).toFixed(1) + 'px';
       ghost.style.transform = 'rotate(' + ghostRotCurrent.toFixed(1) + 'deg)';
 
-      // Position the bubble relative to ghost
-      var isLeft = ghostCurrentX < viewW / 2;
-      var bubbleX = isLeft ? ghostCurrentX + gw + 10 : ghostCurrentX - 180;
-      var bubbleY = ghostCurrentY + bob + 10;
+      // Position the bubble relative to ghost (clamped and visible on mobile)
+      var bw = ghostBubble.offsetWidth || 180;
+      var bh = ghostBubble.offsetHeight || 40;
+      var bubbleX, bubbleY;
+
+      if (viewW <= 560) {
+        var centerX = ghostCurrentX + gw / 2;
+        bubbleX = Math.max(10, Math.min(viewW - bw - 10, centerX - bw / 2));
+        bubbleY = ghostCurrentY + bob - bh - 8;
+        if (bubbleY < 50) {
+          bubbleY = ghostCurrentY + bob + (ghost.offsetHeight || 100) + 8;
+        }
+      } else {
+        var isLeft = ghostCurrentX < viewW / 2;
+        bubbleX = isLeft ? ghostCurrentX + gw + 10 : ghostCurrentX - bw - 10;
+        bubbleX = Math.max(12, Math.min(viewW - bw - 12, bubbleX));
+        bubbleY = ghostCurrentY + bob + 10;
+        if (isLeft) {
+          ghostBubble.classList.add('flip');
+        } else {
+          ghostBubble.classList.remove('flip');
+        }
+      }
+
       ghostBubble.style.left = bubbleX.toFixed(1) + 'px';
       ghostBubble.style.top = bubbleY.toFixed(1) + 'px';
-      if (isLeft) {
-        ghostBubble.classList.add('flip');
-      } else {
-        ghostBubble.classList.remove('flip');
-      }
 
       // spawn trail particles
       spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
