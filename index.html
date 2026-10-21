@@ -1245,40 +1245,9 @@
     ghostBubble.className = 'mod-ghost-bubble';
     document.body.appendChild(ghostBubble);
 
-    var ghostLinesWithFaces = [
-      { face: 'sideEye', text: "Still scrolling? Bold." },
-      { face: 'smug', text: "I see everything from up here!" },
-      { face: 'annoyed', text: "You missed the download button." },
-      { face: 'wink', text: "Keep going, I'll wait." },
-      { face: 'cool', text: "This is MY website, you know." },
-      { face: 'shocked', text: "Are you reading all of this?!" },
-      { face: 'smug', text: "I should charge rent for this sidebar." },
-      { face: 'annoyed', text: "The game is UP there ↑" },
-      { face: 'dizzy', text: "Wheeeee!" },
-      { face: 'dizzy', text: "I'm getting dizzy..." },
-      { face: 'sideEye', text: "Don't look at me, read the page!" },
-      { face: 'wink', text: "Still here? Impressive." },
-      { face: 'crying', text: "My therapist says I hover too much." },
-      { face: 'cool', text: "I'm contractually obligated to follow you." }
-    ];
-    var ghostLineIdx = 0;
     var bubbleTimer = null;
-    var lastBubbleScroll = 0;
     var ghostFaceEl = ghost.querySelector('.mod-face');
     var ghostFaceTimer = null;
-
-    function showGhostBubble() {
-      if (isFastScrolling) return;
-      var item = ghostLinesWithFaces[ghostLineIdx % ghostLinesWithFaces.length];
-      ghostLineIdx++;
-      if (ghostFaceEl) setModFace(ghostFaceEl, item.face);
-      setBubbleSmooth(ghostBubble, item.text);
-      clearTimeout(bubbleTimer);
-      bubbleTimer = setTimeout(function () {
-        ghostBubble.classList.remove('visible');
-        if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-      }, 3000);
-    }
 
     // trail particles pool
     var trailPool = [];
@@ -1393,45 +1362,13 @@
       // spawn trail particles
       spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
 
-      // trigger bubble lines while scrolling
-      var scrollDelta = Math.abs(sy - lastBubbleScroll);
-      if (scrollDelta > 500) {
-        showGhostBubble();
-        lastBubbleScroll = sy;
-      }
     }
 
-    // Fast-scroll motion sickness and speech lines
+    // Fast-scroll visual motion sickness tracking (does NOT change message text)
     var lastRealScroll = window.scrollY || window.pageYOffset;
     var lastScrollTime = performance.now();
     var isFastScrolling = false;
-    var lastFastSpeechTime = 0;
     var recoverTimeout = null;
-
-    var fastScrollDownLines = [
-      { face: 'queasy', text: "SLOW DOWN! I'M GOING TO VOMIT DIGITAL CIRCUITS!" },
-      { face: 'shocked', text: "WHOA WHOA WHOA! What is this, Formula 1?! My rotor is smoking!" },
-      { face: 'queasy', text: "I'm getting motion sick! Somebody grab a cyber-barf bag!" },
-      { face: 'angry', text: "MAYDAY! G-FORCES DETECTED! Pull up, PULL UP!!" },
-      { face: 'dizzy', text: "ARE YOU SCROLLING OR ENTERING EARTH'S ATMOSPHERE?!" },
-      { face: 'crying', text: "MY GYROSCOPE! MY BEAUTIFUL GYROSCOPE IS MELTING!" },
-      { face: 'queasy', text: "BLUURRGH! The pixels are turning inside out!" },
-      { face: 'shocked', text: "SLOW DOWN! THE BROWSER CANNOT RENDER THIS FAST!" }
-    ];
-
-    var fastScrollUpLines = [
-      { face: 'shocked', text: "REVERSE G-FORCE?! ARE YOU TRYING TO LAUNCH ME TO THE MOON?!" },
-      { face: 'queasy', text: "BRAKES! HIT THE BRAKES! MY ROTOR CAN'T TAKE THIS!" },
-      { face: 'angry', text: "UP IS NOT SUPPOSED TO HAPPEN AT MACH 3!!" }
-    ];
-
-    var recoveryLines = [
-      { face: 'queasy', text: "Ugh... my internal fans are working overtime... *pant*" },
-      { face: 'sideEye', text: "Never... do that... again. I saw my manufacturing date flash before my eyes." },
-      { face: 'dizzy', text: "Whew... the whole website is still spinning around me..." },
-      { face: 'annoyed', text: "Next time, use the scrollbar with some basic human dignity." },
-      { face: 'smug', text: "I survived. Barely. Don't think I won't remember that." }
-    ];
 
     function ghostLoop() {
       var realScroll = window.scrollY || window.pageYOffset;
@@ -1445,60 +1382,29 @@
 
       smoothScrollY += (realScroll - smoothScrollY) * 0.1;
 
-      // FAST SCROLL HANDLING
+      // FAST SCROLL VISUAL HANDLING (rotor hyper-spin, queasy face, wobble, trails)
       if (speed > 35) {
         if (!isFastScrolling) {
           isFastScrolling = true;
           ghost.classList.add('fast-spin', 'queasy');
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'queasy');
         }
 
-        // Extra motion trails when flying supersonic
+        // Extra motion trails when flying fast
         var gw = ghost.offsetWidth || 120;
         var bob = Math.sin(now / 500) * 6;
         spawnTrail(ghostCurrentX + gw / 2, ghostCurrentY + bob + (ghost.offsetHeight || 100));
 
-        // Speak high-speed freakout line (throttled to once every 1.8s)
-        if (now - lastFastSpeechTime > 1800) {
-          lastFastSpeechTime = now;
-          var lines = deltaY > 0 ? fastScrollDownLines : fastScrollUpLines;
-          var pick = lines[Math.floor(Math.random() * lines.length)];
-          if (ghostFaceEl) setModFace(ghostFaceEl, pick.face);
-          setBubbleSmooth(ghostBubble, pick.text);
-          clearTimeout(bubbleTimer);
-          bubbleTimer = setTimeout(function () {
-            ghostBubble.classList.remove('visible');
-          }, 3200);
-        }
-
         clearTimeout(recoverTimeout);
       } else if (isFastScrolling && speed < 12) {
-        // Slowed down from high-speed sprint
+        // Slowed down from fast scroll
         isFastScrolling = false;
         ghost.classList.remove('fast-spin', 'queasy');
 
         clearTimeout(recoverTimeout);
         recoverTimeout = setTimeout(function () {
-          var rec = recoveryLines[Math.floor(Math.random() * recoveryLines.length)];
-          if (ghostFaceEl) setModFace(ghostFaceEl, rec.face);
-          setBubbleSmooth(ghostBubble, rec.text);
-          clearTimeout(bubbleTimer);
-          bubbleTimer = setTimeout(function () {
-            ghostBubble.classList.remove('visible');
-            if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-          }, 3500);
-        }, 350);
-      }
-
-      // If scrolling fast near top, hero moderator also panics
-      if (realScroll < 350 && speed > 45 && now - lastFastSpeechTime > 3000) {
-        lastFastSpeechTime = now;
-        setModFace(modFace, 'shocked');
-        setBubbleSmooth(bubble, 'WHOA! Slow down, you almost blew me off the platform!<small>High-speed scroll detected!</small>', true);
-        restart(modBtn, 'poked');
-        clearTimeout(modFaceTimer);
-        modFaceTimer = setTimeout(function () {
-          setModFace(modFace, 'smug');
-        }, 3500);
+          if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
+        }, 1500);
       }
 
       updateGhost();
@@ -1506,17 +1412,28 @@
     }
     requestAnimationFrame(ghostLoop);
 
-    // click on ghost moderator (facial expressions + humor)
+    // click on ghost moderator (messages only change when poked)
     var ghostPokes = 0;
     var ghostPokeReactions = [
       { face: 'surprised', text: "HEY! I'm flying here! You want me to crash?!" },
+      { face: 'queasy', text: "Slow down! I'm getting motion sick! Somebody grab a barf bag!" },
       { face: 'angry', text: "Don't tap the glass! It startles the rotor blades!" },
       { face: 'wink', text: "Scrolling AND poking? That is elite multi-tasking." },
       { face: 'dizzy', text: "Wheee! Mid-air turbulence detected!" },
       { face: 'sideEye', text: "Still watching you. The download is up top, by the way." },
       { face: 'cool', text: "Hovering gracefully. Your pokes can't ground me." },
       { face: 'shocked', text: "Mayday! Host under aerial finger assault!" },
-      { face: 'crying', text: "I have to fly AND get poked? Where is OSHA?!" }
+      { face: 'crying', text: "I have to fly AND get poked? Where is OSHA?!" },
+      { face: 'sideEye', text: "Still scrolling? Bold." },
+      { face: 'smug', text: "I see everything from up here!" },
+      { face: 'annoyed', text: "You missed the download button." },
+      { face: 'cool', text: "This is MY website, you know." },
+      { face: 'shocked', text: "Are you reading all of this?!" },
+      { face: 'smug', text: "I should charge rent for this sidebar." },
+      { face: 'annoyed', text: "The game is UP there ↑" },
+      { face: 'queasy', text: "Ugh... my internal fans are working overtime... *pant*" },
+      { face: 'crying', text: "My therapist says I hover too much." },
+      { face: 'cool', text: "I'm contractually obligated to follow you." }
     ];
 
     ghost.addEventListener('click', function () {
@@ -1528,7 +1445,7 @@
       bubbleTimer = setTimeout(function () {
         ghostBubble.classList.remove('visible');
         if (ghostFaceEl) setModFace(ghostFaceEl, 'smug');
-      }, 3000);
+      }, 3200);
 
       var svg = ghost.querySelector('.mod-svg');
       if (ghostPokes % 3 === 0 && svg) {
